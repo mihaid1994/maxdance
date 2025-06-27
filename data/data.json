@@ -1,0 +1,768 @@
+{
+  "schedule": {
+    "10:00": {
+      "6": [
+        {
+          "name": "ДЕТИ 7-10 лет",
+          "level": "детская",
+          "teacher": "Полина Салимгареева",
+          "type": "kids",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "11:00": {
+      "6": [
+        {
+          "name": "ЛЕДИ 50+",
+          "level": "набор",
+          "teacher": "Наталья Петровских",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "12:00": {
+      "5": [
+        {
+          "name": "HIGH HEELS",
+          "level": "базовый курс",
+          "teacher": "Екатерина Черногорец",
+          "type": "high-heels",
+          "location": "либкнехта"
+        }
+      ],
+      "6": [
+        {
+          "name": "БАЧАТА СОЛО",
+          "level": "общий",
+          "teacher": "Артем Романов",
+          "type": "bachata-solo",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,7",
+          "teacher": "Екатерина Махова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "13:00": {
+      "5": [
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,2",
+          "teacher": "Влада Орлова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,6",
+          "teacher": "Дмитрий Чезганов, Полина Панова",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ],
+      "6": [
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Всеволод Богомол, Александра Ретанова",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "14:00": {
+      "5": [
+        {
+          "name": "БАЧАТА ЖС ПРО",
+          "level": "профи",
+          "teacher": "Екатерина Махова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        }
+      ],
+      "6": [
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Артем Романов",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,5",
+          "teacher": "Наталья Мещерякова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "15:00": {
+      "5": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,8",
+          "teacher": "Дмитрий Чезганов, Екатерина Черногорец",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ],
+      "6": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,2",
+          "teacher": "Владимир Воденников, Аполлинария Степанченко",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "16:00": {
+      "5": [
+        {
+          "name": "БАЧАТА Sensual",
+          "level": "0,6",
+          "teacher": "Алексей Симон",
+          "type": "special",
+          "location": "либкнехта"
+        }
+      ]
+    },
+    "18:00": {
+      "0": [
+        {
+          "name": "БАЧАТА",
+          "level": "1",
+          "teacher": "Всеволод Богомол",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "ДЕТИ 3-5 лет",
+          "level": "детская",
+          "teacher": "Полина Салимгареева",
+          "type": "kids",
+          "location": "8 марта"
+        },
+        {
+          "name": "САЛЬСА",
+          "level": "набор",
+          "teacher": "Максим Щербаков",
+          "type": "salsa",
+          "location": "8 марта"
+        },
+        {
+          "name": "HIGH HEELS",
+          "level": "курс",
+          "teacher": "Анастасия Деньщикова",
+          "type": "high-heels",
+          "location": "8 марта"
+        }
+      ],
+      "1": [
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,2",
+          "teacher": "Аполлинария Степанченко",
+          "type": "bachata-women",
+          "location": "8 марта"
+        }
+      ],
+      "2": [
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,3",
+          "teacher": "Анна Склюева",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "1",
+          "teacher": "Всеволод Богомол",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "HIGH HEELS",
+          "level": "курс",
+          "teacher": "Анастасия Деньщикова",
+          "type": "high-heels",
+          "location": "8 марта"
+        }
+      ],
+      "3": [
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,2",
+          "teacher": "Аполлинария Степанченко",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "ДЕТИ 3-5 лет",
+          "level": "детская",
+          "teacher": "Полина Салимгареева",
+          "type": "kids",
+          "location": "8 марта"
+        },
+        {
+          "name": "САЛЬСА",
+          "level": "набор",
+          "teacher": "Максим Щербаков",
+          "type": "salsa",
+          "location": "8 марта"
+        }
+      ],
+      "4": [
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,3",
+          "teacher": "Анна Склюева",
+          "type": "bachata-women",
+          "location": "8 марта"
+        }
+      ],
+      "6": [
+        {
+          "name": "LADY STYLE",
+          "level": "начинающие",
+          "teacher": "Влада Орлова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "19:00": {
+      "0": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,2",
+          "teacher": "Алексей Велигжанин, Камилла Сафарова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,8",
+          "teacher": "Всеволод Богомол, Екатерина Махова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,5",
+          "teacher": "Дарья Шамаева",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,8-1",
+          "teacher": "Анастасия Деньщикова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "САЛЬСА",
+          "level": "набор",
+          "teacher": "Алексей Симон",
+          "type": "salsa",
+          "location": "либкнехта"
+        }
+      ],
+      "1": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,2",
+          "teacher": "Дмитрий Чезганов, Полина Панова",
+          "type": "bachata-general",
+          "location": "8 марта"
+        },
+        {
+          "name": "САЛЬСА",
+          "level": "набор",
+          "teacher": "Всеволод Богомол",
+          "type": "salsa",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Алексей Симон",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,7",
+          "teacher": "Аполлинария Степанченко",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "HIGH HEELS",
+          "level": "1",
+          "teacher": "Анастасия Деньщикова",
+          "type": "high-heels",
+          "location": "8 марта"
+        }
+      ],
+      "2": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,2",
+          "teacher": "Алексей Велигжанин, Камилла Сафарова",
+          "type": "bachata-general",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,8",
+          "teacher": "Всеволод Богомол, Екатерина Махова",
+          "type": "bachata-continuing",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,3",
+          "teacher": "Алена Томилова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,8-1",
+          "teacher": "Анастасия Деньщикова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "1",
+          "teacher": "Склюевы Вячеслав, Анна",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ],
+      "3": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,2",
+          "teacher": "Дмитрий Чезганов, Полина Панова",
+          "type": "bachata-general",
+          "location": "8 марта"
+        },
+        {
+          "name": "САЛЬСА",
+          "level": "набор",
+          "teacher": "Всеволод Богомол",
+          "type": "salsa",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,5",
+          "teacher": "Дарья Шамаева",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,7",
+          "teacher": "Аполлинария Степанченко",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "САЛЬСА",
+          "level": "набор",
+          "teacher": "Алексей Симон",
+          "type": "salsa",
+          "location": "либкнехта"
+        }
+      ],
+      "4": [
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,2",
+          "teacher": "Алена Томилова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Алексей Симон",
+          "type": "bachata-general",
+          "location": "8 марта"
+        },
+        {
+          "name": "HIGH HEELS",
+          "level": "1",
+          "teacher": "Анастасия Деньщикова",
+          "type": "high-heels",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "1",
+          "teacher": "Склюевы Вячеслав, Анна",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "20:00": {
+      "0": [
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Всеволод Богомол, Катя Махова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,4",
+          "teacher": "Аполлинария Степанченко",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "1",
+          "teacher": "Шамаева Дарья",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Артем Романов, Влада Орлова",
+          "type": "special",
+          "location": "либкнехта"
+        },
+        {
+          "name": "БАЧАТА СВЯЗКИ",
+          "level": "0,4",
+          "teacher": "Алексей Симон",
+          "type": "special",
+          "location": "либкнехта"
+        }
+      ],
+      "1": [
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,2",
+          "teacher": "Полина Панова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,2",
+          "teacher": "Всеволод Богомол, Александра Ретанова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ШОУ",
+          "level": "хорео",
+          "teacher": "Алексей Симон",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС БЕДРА",
+          "level": "курс",
+          "teacher": "Наталья Мещерякова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        }
+      ],
+      "2": [
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Всеволод Богомол, Катя Махова",
+          "type": "bachata-general",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,4",
+          "teacher": "Аполлинария Степанченко",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ПЛАСТИКА И ИЗОЛЯЦИЯ",
+          "level": "курс",
+          "teacher": "Склюевы Вячеслав, Анна",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "1",
+          "teacher": "Малковы Вячеслав, Владислава",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Артем Романов, Влада Орлова",
+          "type": "special",
+          "location": "либкнехта"
+        },
+        {
+          "name": "БАЧАТА СВЯЗКИ",
+          "level": "0,4",
+          "teacher": "Алексей Симон",
+          "type": "special",
+          "location": "либкнехта"
+        }
+      ],
+      "3": [
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,2",
+          "teacher": "Полина Панова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,2",
+          "teacher": "Всеволод Богомол, Александра Ретанова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,8",
+          "teacher": "Шамаева Дарья",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "набор",
+          "teacher": "Артем Романов, Влада Орлова",
+          "type": "special",
+          "location": "либкнехта"
+        },
+        {
+          "name": "БАЧАТА СВЯЗКИ",
+          "level": "0,4",
+          "teacher": "Алексей Симон",
+          "type": "special",
+          "location": "либкнехта"
+        }
+      ],
+      "4": [
+        {
+          "name": "БАЧАТА ШОУ",
+          "level": "хорео",
+          "teacher": "Алексей Симон",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ПЛАСТИКА И ИЗОЛЯЦИЯ",
+          "level": "курс",
+          "teacher": "Склюевы Вячеслав, Анна",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС БЕДРА",
+          "level": "курс",
+          "teacher": "Наталья Мещерякова",
+          "type": "bachata-women",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "1",
+          "teacher": "Малковы Вячеслав, Владислава",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ]
+    },
+    "21:00": {
+      "0": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,6",
+          "teacher": "Всеволод Богомол, Екатерина Махова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,4",
+          "teacher": "Владимир Воденников, Аполлинария Степанченко",
+          "type": "bachata-general",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,8",
+          "teacher": "Алексей Велигжанин, Камилла Сафарова",
+          "type": "bachata-continuing",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "1",
+          "teacher": "Дмитрий Попов, Дарья Шамаева",
+          "type": "bachata-advanced",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,4",
+          "teacher": "Алексей Симон",
+          "type": "bachata-women",
+          "location": "либкнехта"
+        }
+      ],
+      "1": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,4",
+          "teacher": "Всеволод Богомол, Александра Ретанова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА СОЛО",
+          "level": "0,3",
+          "teacher": "Вячеслав Склюев",
+          "type": "bachata-solo",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ПРО",
+          "level": "профи",
+          "teacher": "Алексей Симон",
+          "type": "bachata-advanced",
+          "location": "8 марта"
+        }
+      ],
+      "2": [
+        {
+          "name": "БАЧАТА",
+          "level": "0,6",
+          "teacher": "Всеволод Богомол, Екатерина Махова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,4",
+          "teacher": "Владимир Воденников, Аполлинария Степанченко",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,7",
+          "teacher": "Алексей Велигжанин, Камилла Сафарова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,4",
+          "teacher": "Алексей Симон",
+          "type": "bachata-women",
+          "location": "либкнехта"
+        }
+      ],
+      "3": [
+        {
+          "name": "БАЧАТА СОЛО",
+          "level": "0,3",
+          "teacher": "Вячеслав Склюев",
+          "type": "bachata-solo",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "0,4",
+          "teacher": "Всеволод Богомол, Александра Ретанова",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА",
+          "level": "1",
+          "teacher": "Дмитрий Попов, Дарья Шамаева",
+          "type": "special",
+          "location": "8 марта"
+        },
+        {
+          "name": "БАЧАТА ЖС",
+          "level": "0,4",
+          "teacher": "Алексей Симон",
+          "type": "bachata-women",
+          "location": "либкнехта"
+        }
+      ],
+      "4": [
+        {
+          "name": "БАЧАТА ПРО",
+          "level": "хорео",
+          "teacher": "Алексей Симон",
+          "type": "special",
+          "location": "8 марта"
+        }
+      ]
+    }
+  },
+  "timeSlots": [
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "18:00",
+    "19:00",
+    "20:00",
+    "21:00"
+  ],
+  "dayNames": [
+    "Понедельник",
+    "Вторник",
+    "Среда",
+    "Четверг",
+    "Пятница",
+    "Суббота",
+    "Воскресенье"
+  ],
+  "typeNames": {
+    "bachata-women": "Женский стиль",
+    "bachata-solo": "Соло",
+    "salsa": "Сальса",
+    "high-heels": "High Heels",
+    "special": "Спецкурсы",
+    "kids": "Детские"
+  },
+  "locationNames": {
+    "8 марта": "ул. 8 Марта (Мытный Двор)",
+    "либкнехта": "ул. К.Либкнехта (Консул)"
+  }
+}

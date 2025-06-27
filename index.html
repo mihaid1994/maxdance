@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Расписание MaxDance</title>
+    <link rel="stylesheet" href="./css/face.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="header-content">
+          <div class="logo-section">
+            <img src="./data/logo.svg" alt="MaxDance" class="logo" />
+            <div class="header-text">
+              <h1>MaxDance</h1>
+              <p>Школа танцев</p>
+            </div>
+          </div>
+          <div class="locations">
+            <div class="location">
+              📍 ул. 8 Марта, 8Д (ТЦ Мытный Двор, 2 этаж)
+            </div>
+            <div class="location">
+              📍 ул. Карла Либкнехта, 22 (БЦ Консул, 2 этаж)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Filter Button -->
+      <button class="filter-fab" id="filter-fab" onclick="toggleFilters()">
+        <span class="filter-fab-icon">🔍</span>
+        <div class="filter-fab-content">
+          <span class="filter-fab-title">Фильтры</span>
+          <div class="filter-fab-tags" id="filter-fab-tags">
+            <!-- Заполняется JavaScript -->
+          </div>
+        </div>
+      </button>
+
+      <!-- Off-canvas Filters -->
+      <div
+        class="filters-overlay"
+        id="filters-overlay"
+        onclick="closeFilters()"
+      ></div>
+      <div class="filters-sidebar" id="filters-sidebar">
+        <div class="filters-header">
+          <h3 class="filters-title">🔍 Фильтры</h3>
+          <button class="filters-close" onclick="closeFilters()">×</button>
+        </div>
+
+        <div class="filters-content">
+          <div class="filter-group">
+            <div
+              class="filter-header"
+              onclick="toggleFilterGroup('teacherFilters')"
+            >
+              <label class="filter-label">👨‍🏫 Преподаватели</label>
+              <button class="filter-toggle">▼</button>
+            </div>
+            <div class="filter-options" id="teacherFilters">
+              <!-- Заполняется JavaScript -->
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div
+              class="filter-header"
+              onclick="toggleFilterGroup('levelFilters')"
+            >
+              <label class="filter-label">📊 Уровень</label>
+              <button class="filter-toggle">▼</button>
+            </div>
+            <div class="filter-options" id="levelFilters">
+              <!-- Заполняется JavaScript -->
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div
+              class="filter-header"
+              onclick="toggleFilterGroup('typeFilters')"
+            >
+              <label class="filter-label">💃 Тип занятия</label>
+              <button class="filter-toggle">▼</button>
+            </div>
+            <div class="filter-options" id="typeFilters">
+              <!-- Заполняется JavaScript -->
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div
+              class="filter-header"
+              onclick="toggleFilterGroup('locationFilters')"
+            >
+              <label class="filter-label">📍 Локация</label>
+              <button class="filter-toggle">▼</button>
+            </div>
+            <div class="filter-options" id="locationFilters">
+              <!-- Заполняется JavaScript -->
+            </div>
+          </div>
+
+          <button class="clear-filters" onclick="clearAllFilters()">
+            🗑️ Очистить все фильтры
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop Table View -->
+      <div class="table-container" id="table-container">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Время</th>
+              <th>Понедельник</th>
+              <th>Вторник</th>
+              <th>Среда</th>
+              <th>Четверг</th>
+              <th>Пятница</th>
+              <th>Суббота</th>
+              <th>Воскресенье</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body">
+            <!-- Заполняется JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Card View -->
+      <div class="mobile-schedule" id="mobile-schedule">
+        <!-- Заполняется JavaScript -->
+      </div>
+
+      <div class="stats" id="stats">
+        <!-- Заполняется JavaScript -->
+      </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="class-modal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div class="modal-header" id="modal-title">
+          <!-- Заполняется JavaScript -->
+        </div>
+        <div class="modal-body" id="modal-body">
+          <!-- Заполняется JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <script src="./js/basefucs.js"></script>
+  </body>
+</html>
