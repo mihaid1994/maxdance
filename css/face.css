@@ -322,6 +322,121 @@ body {
   overflow: hidden;
 }
 
+/* Стили для кнопок в заголовке "Мои группы" */
+.my-groups-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.my-groups-edit-btn,
+.my-groups-save-btn {
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  color: #495057;
+  border: 1px solid rgba(108, 117, 125, 0.2);
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.my-groups-edit-btn:hover {
+  background: linear-gradient(145deg, #f39c12, #e67e22);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(243, 156, 18, 0.3);
+}
+
+.my-groups-edit-btn.active {
+  background: linear-gradient(145deg, #e74c3c, #c0392b);
+  color: white;
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+}
+
+.my-groups-edit-btn.active:hover {
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.my-groups-save-btn {
+  background: linear-gradient(145deg, #27ae60, #229954);
+  color: white;
+  box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
+}
+
+.my-groups-save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.4);
+}
+
+/* Остальные стили для функционала "Мои группы" */
+.my-groups-main-toggle {
+  font-size: 1em !important;
+  font-weight: bold !important;
+  padding: 12px 15px !important;
+}
+
+.no-groups-message {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  padding: 15px;
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 8px;
+  border: 1px dashed #dee2e6;
+  margin-top: 10px;
+}
+
+.select-mode-instructions {
+  margin-top: 10px;
+  animation: fadeIn 0.3s ease;
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.85em;
+  color: #1976d2;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selected-group {
+  background: linear-gradient(145deg, #d4edda, #c3e6cb) !important;
+  border: 2px solid #28a745 !important;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
+}
+
+.my-group {
+  border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3) !important;
+}
+
+.my-group-star {
+  position: absolute;
+  top: 2px;
+  right: 28px;
+  font-size: 0.8em;
+  color: #ffd700;
+  z-index: 2;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 .filter-button {
   background: linear-gradient(145deg, #ffffff, #f8f9fa);
   color: #495057;
@@ -847,6 +962,17 @@ body {
   .filter-group {
     padding: 12px;
     margin-bottom: 20px;
+  }
+
+  .my-groups-edit-btn,
+  .my-groups-save-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 0.8em;
+  }
+
+  .my-groups-header-controls {
+    gap: 6px;
   }
 
   .mobile-day-card {

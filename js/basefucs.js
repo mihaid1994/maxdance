@@ -59,7 +59,13 @@ let activeFilters = {
   levels: new Set(),
   types: new Set(),
   locations: new Set(),
+  showMyGroupsOnly: false,
 };
+
+// Переменные для функционала "Мои группы"
+let myGroups = new Set(); // Сохраненные группы пользователя
+let isSelectMode = false; // Режим выбора групп
+let tempSelectedGroups = new Set(); // Временно выбранные группы
 
 let openFilterGroups = new Set(); // Отслеживание открытых групп фильтров
 let collapsedMobileDays = new Set(); // Отслеживание свернутых дней в мобильной версии
@@ -74,12 +80,24 @@ async function loadData() {
     dayNames = data.dayNames;
     typeNames = data.typeNames;
     locationNames = data.locationNames;
+
+    // Загружаем сохраненные группы пользователя, если они есть
+    if (data.myGroups) {
+      myGroups = new Set(data.myGroups);
+      // По умолчанию показываем только мои группы
+      activeFilters.showMyGroupsOnly = true;
+    }
   } catch (error) {
     console.error("Ошибка загрузки данных:", error);
     // Fallback данные в случае ошибки
     scheduleData = {};
     timeSlots = [];
   }
+}
+
+// Генерация уникального ключа для занятия
+function getClassKey(classItem, time, day) {
+  return `${classItem.name}_${classItem.level}_${classItem.teacher}_${classItem.location}_${time}_${day}`;
 }
 
 // Извлечение всех данных для фильтров
@@ -135,6 +153,197 @@ function closeFilters() {
   document.body.style.overflow = "";
 }
 
+// Переключение режима редактирования групп
+function toggleMyGroupsEditMode() {
+  isSelectMode = !isSelectMode;
+
+  const editBtn = document.getElementById("my-groups-edit-btn");
+  const saveBtn = document.getElementById("my-groups-save-btn");
+
+  if (isSelectMode) {
+    console.log("🎯 Вход в режим выбора групп");
+
+    // Активируем кнопку редактирования
+    editBtn.classList.add("active");
+    editBtn.textContent = "❌";
+    editBtn.title = "Отменить выбор групп";
+
+    // Показываем кнопку сохранения
+    saveBtn.style.display = "flex";
+
+    // ВАЖНО: Начинаем с пустого набора - выбираем только то, что хотим сохранить
+    tempSelectedGroups.clear();
+    console.log("📝 Начинаем выбор с чистого листа");
+
+    // Показываем инструкции
+    showMyGroupsInstructions();
+  } else {
+    console.log("🚪 Выход из режима выбора групп");
+
+    // Деактивируем кнопку редактирования
+    editBtn.classList.remove("active");
+    editBtn.textContent = "✏️";
+    editBtn.title = "Редактировать мои группы";
+
+    // Скрываем кнопку сохранения
+    saveBtn.style.display = "none";
+
+    // Очищаем временный набор
+    tempSelectedGroups.clear();
+    console.log("🗑️ Временный выбор очищен");
+
+    // Убираем инструкции
+    hideMyGroupsInstructions();
+  }
+
+  renderFilteredSchedule();
+}
+
+// Сохранение данных моих групп
+async function saveMyGroupsData() {
+  if (!isSelectMode) return;
+
+  try {
+    console.log(
+      "💾 Сохранение выбранных групп:",
+      Array.from(tempSelectedGroups)
+    );
+
+    // Обновляем сохраненные группы ТОЛЬКО теми, что выбрали в режиме
+    myGroups = new Set(tempSelectedGroups);
+
+    // Загружаем текущий JSON
+    const response = await fetch("./data/data.json");
+    const data = await response.json();
+    data.myGroups = Array.from(myGroups);
+
+    // Создаем и скачиваем обновленный файл
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "data.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log("✅ Новые группы сохранены:", Array.from(myGroups));
+
+    // Выходим из режима редактирования
+    toggleMyGroupsEditMode();
+
+    // Обновляем интерфейс
+    createMyGroupsControls();
+    renderFilteredSchedule();
+    updateStats();
+    updateFilterFab();
+
+    alert(
+      `✅ Группы сохранены! Выбрано групп: ${myGroups.size}\nФайл data.json скачан. Замените его в папке data/ вашего приложения.`
+    );
+  } catch (error) {
+    console.error("❌ Ошибка сохранения:", error);
+    alert("❌ Ошибка при сохранении групп: " + error.message);
+  }
+}
+
+// Показать инструкции для режима редактирования
+function showMyGroupsInstructions() {
+  const container = document.getElementById("myGroupsFilters");
+  let instructionDiv = container.querySelector(".select-mode-instructions");
+
+  if (!instructionDiv) {
+    instructionDiv = document.createElement("div");
+    instructionDiv.className = "select-mode-instructions";
+    instructionDiv.innerHTML = `
+      <strong>🎯 Режим выбора групп активен!</strong><br>
+      Кликайте по занятиям в расписании для выбора ваших групп.<br>
+      Нажмите 💾 для сохранения выбранных групп.
+    `;
+    container.appendChild(instructionDiv);
+  }
+}
+
+// Скрыть инструкции для режима редактирования
+function hideMyGroupsInstructions() {
+  const container = document.getElementById("myGroupsFilters");
+  const instructionDiv = container.querySelector(".select-mode-instructions");
+  if (instructionDiv) {
+    instructionDiv.remove();
+  }
+}
+
+// Обработка клика на занятие в режиме редактирования
+function handleMyGroupsSelection(classItem, time, day, element) {
+  if (!isSelectMode) return;
+
+  const classKey = getClassKey(classItem, time, day);
+
+  if (tempSelectedGroups.has(classKey)) {
+    // Убираем из выбранных
+    tempSelectedGroups.delete(classKey);
+    element.classList.remove("selected-group");
+    console.log("➖ Убрано из групп:", classItem.name);
+  } else {
+    // Добавляем в выбранные
+    tempSelectedGroups.add(classKey);
+    element.classList.add("selected-group");
+    console.log("➕ Добавлено в группы:", classItem.name);
+  }
+
+  console.log("📊 Всего выбрано групп:", tempSelectedGroups.size);
+}
+
+// Переключение фильтра "Показать только мои группы"
+function toggleMyGroupsFilter() {
+  activeFilters.showMyGroupsOnly = !activeFilters.showMyGroupsOnly;
+
+  const button = document.getElementById("my-groups-toggle");
+  if (activeFilters.showMyGroupsOnly) {
+    button.classList.add("active");
+  } else {
+    button.classList.remove("active");
+  }
+
+  renderFilteredSchedule();
+  updateStats();
+  updateFilterFab();
+}
+
+// Создание элементов управления для фильтра "Мои группы"
+function createMyGroupsControls() {
+  const container = document.getElementById("myGroupsFilters");
+  container.innerHTML = "";
+
+  // Создаем главную кнопку-переключатель
+  const toggleButton = document.createElement("button");
+  toggleButton.id = "my-groups-toggle";
+  toggleButton.className = "filter-button my-groups-main-toggle";
+  toggleButton.textContent = `⭐ Показать только мои группы (${myGroups.size})`;
+  if (activeFilters.showMyGroupsOnly) {
+    toggleButton.classList.add("active");
+  }
+  toggleButton.onclick = toggleMyGroupsFilter;
+
+  container.appendChild(toggleButton);
+
+  // Если нет групп, показываем сообщение
+  if (myGroups.size === 0) {
+    const message = document.createElement("div");
+    message.className = "no-groups-message";
+    message.textContent =
+      "Группы не выбраны. Используйте кнопку редактирования для добавления.";
+    container.appendChild(message);
+  }
+
+  // Показываем инструкции если активен режим выбора
+  if (isSelectMode) {
+    showMyGroupsInstructions();
+  }
+}
+
 // Обновление плавающей кнопки фильтров
 function updateFilterFab() {
   const tagsContainer = document.getElementById("filter-fab-tags");
@@ -142,6 +351,10 @@ function updateFilterFab() {
 
   // Собираем все активные фильтры
   const activeTags = [];
+
+  if (activeFilters.showMyGroupsOnly) {
+    activeTags.push({ type: "myGroups", value: "Мои группы" });
+  }
 
   activeFilters.teachers.forEach((teacher) => {
     activeTags.push({ type: "teacher", value: teacher.split(" ")[0] }); // Только имя
@@ -216,6 +429,7 @@ function createLevelFilterButtons(container, levels) {
     }
   });
 }
+
 function createFilterButtons(container, items, filterType) {
   container.innerHTML = "";
   [...items].sort().forEach((item) => {
@@ -268,11 +482,17 @@ function clearAllFilters() {
     levels: new Set(),
     types: new Set(),
     locations: new Set(),
+    showMyGroupsOnly: false,
   };
 
   document.querySelectorAll(".filter-button").forEach((btn) => {
     btn.classList.remove("active");
   });
+
+  // Если находимся в режиме редактирования, выходим из него
+  if (isSelectMode) {
+    toggleMyGroupsEditMode();
+  }
 
   renderFilteredSchedule();
   updateStats();
@@ -299,9 +519,11 @@ function toggleFilterGroup(groupId) {
       const openToggle = document.querySelector(
         `[onclick="toggleFilterGroup('${openGroupId}')"] .filter-toggle`
       );
-      openOptions.classList.remove("expanded");
-      openOptions.classList.add("collapsed");
-      openToggle.classList.add("collapsed");
+      if (openOptions && openToggle) {
+        openOptions.classList.remove("expanded");
+        openOptions.classList.add("collapsed");
+        openToggle.classList.add("collapsed");
+      }
     });
     openFilterGroups.clear();
 
@@ -314,7 +536,13 @@ function toggleFilterGroup(groupId) {
 }
 
 // Проверка соответствия фильтрам
-function matchesFilters(classItem) {
+function matchesFilters(classItem, time, day) {
+  // Если активен фильтр "Показать только мои группы"
+  if (activeFilters.showMyGroupsOnly) {
+    const classKey = getClassKey(classItem, time, day);
+    return myGroups.has(classKey);
+  }
+
   // Проверка преподавателей (поиск по любому из указанных)
   if (activeFilters.teachers.size > 0) {
     const teacherList = classItem.teacher
@@ -370,13 +598,43 @@ function toggleMobileDay(dayIndex) {
   }
 }
 
-function createClassItem(classData) {
+function createClassItem(classData, time, day) {
   const locationClass =
     classData.location === "8 марта" ? "loc-8marta" : "loc-libknehta";
   const locationText = classData.location === "8 марта" ? "8М" : "КЛ";
 
+  const classKey = getClassKey(classData, time, day);
+  const isMyGroup = myGroups.has(classKey);
+
+  let additionalClasses = "";
+  let showStar = false;
+
+  if (isSelectMode) {
+    // В режиме выбора показываем только те, что выбираем сейчас
+    const isCurrentlySelected = tempSelectedGroups.has(classKey);
+    if (isCurrentlySelected) {
+      additionalClasses += " selected-group";
+    }
+  } else {
+    // В обычном режиме показываем мои сохраненные группы
+    if (isMyGroup) {
+      additionalClasses += " my-group";
+      showStar = true;
+    }
+  }
+
+  const clickHandler = isSelectMode
+    ? `handleMyGroupsSelection(${JSON.stringify(classData).replace(
+        /"/g,
+        "&quot;"
+      )}, '${time}', ${day}, this)`
+    : `showClassDetails('${classData.name}', '${classData.level}', '${classData.teacher}', '${classData.location}')`;
+
   return `
-        <div class="class-item ${classData.type}" onclick="showClassDetails('${classData.name}', '${classData.level}', '${classData.teacher}', '${classData.location}')">
+        <div class="class-item ${
+          classData.type
+        }${additionalClasses}" onclick="${clickHandler}">
+            ${showStar ? '<div class="my-group-star">⭐</div>' : ""}
             <div class="class-location ${locationClass}">${locationText}</div>
             <div class="class-name">${classData.name}</div>
             <div class="class-level">${classData.level}</div>
@@ -405,9 +663,13 @@ function renderTableSchedule() {
       dayCell.className = "class-cell";
 
       if (scheduleData[time] && scheduleData[time][day]) {
-        const classes = scheduleData[time][day].filter(matchesFilters);
+        const classes = scheduleData[time][day].filter((cls) =>
+          matchesFilters(cls, time, day)
+        );
         if (classes.length > 0) {
-          dayCell.innerHTML = classes.map(createClassItem).join("");
+          dayCell.innerHTML = classes
+            .map((cls) => createClassItem(cls, time, day))
+            .join("");
         } else {
           dayCell.innerHTML = '<div class="empty-cell">—</div>';
         }
@@ -446,7 +708,9 @@ function renderMobileSchedule() {
 
     timeSlots.forEach((time) => {
       if (scheduleData[time] && scheduleData[time][dayIndex]) {
-        const classes = scheduleData[time][dayIndex].filter(matchesFilters);
+        const classes = scheduleData[time][dayIndex].filter((cls) =>
+          matchesFilters(cls, time, dayIndex)
+        );
         if (classes.length > 0) {
           hasClasses = true;
 
@@ -460,7 +724,9 @@ function renderMobileSchedule() {
 
           const classesContainer = document.createElement("div");
           classesContainer.className = "mobile-classes";
-          classesContainer.innerHTML = classes.map(createClassItem).join("");
+          classesContainer.innerHTML = classes
+            .map((cls) => createClassItem(cls, time, dayIndex))
+            .join("");
           timeSlot.appendChild(classesContainer);
 
           dayContent.appendChild(timeSlot);
@@ -496,19 +762,23 @@ function renderFilteredSchedule() {
 
 // Обновление статистики
 function updateStats() {
-  const totalClasses = Object.values(scheduleData).reduce((total, timeData) => {
-    return (
-      total +
-      Object.values(timeData).reduce((dayTotal, dayClasses) => {
-        return dayTotal + dayClasses.filter(matchesFilters).length;
-      }, 0)
-    );
-  }, 0);
+  let totalClasses = 0;
 
-  const activeFiltersCount = Object.values(activeFilters).reduce(
-    (sum, set) => sum + set.size,
-    0
-  );
+  Object.keys(scheduleData).forEach((time) => {
+    Object.keys(scheduleData[time]).forEach((day) => {
+      totalClasses += scheduleData[time][day].filter((cls) =>
+        matchesFilters(cls, time, parseInt(day))
+      ).length;
+    });
+  });
+
+  // Подсчитываем активные фильтры
+  let activeFiltersCount = 0;
+  if (activeFilters.showMyGroupsOnly) activeFiltersCount++;
+  activeFiltersCount += activeFilters.teachers.size;
+  activeFiltersCount += activeFilters.levels.size;
+  activeFiltersCount += activeFilters.types.size;
+  activeFiltersCount += activeFilters.locations.size;
 
   document.getElementById("stats").innerHTML = `
         <span style="color: #f39c12;">📊 Показано занятий:</span> <strong>${totalClasses}</strong> | 
@@ -565,6 +835,8 @@ document.addEventListener("keydown", function (event) {
 
 // Инициализация приложения
 async function initializeApp() {
+  console.log("🚀 Инициализация приложения...");
+
   await loadData();
 
   const { teachers, levels, types, locations } = extractAllData();
@@ -625,7 +897,10 @@ async function initializeApp() {
     locationButtons.appendChild(button);
   });
 
-  // По умолчанию все секции фильтров свернуты
+  // Создание фильтра "Мои группы"
+  createMyGroupsControls();
+
+  // По умолчанию все секции фильтров свернуты, кроме "Мои группы"
   ["teacherFilters", "levelFilters", "typeFilters", "locationFilters"].forEach(
     (groupId) => {
       const options = document.getElementById(groupId);
@@ -639,6 +914,9 @@ async function initializeApp() {
     }
   );
 
+  // Фильтр "Мои группы" открыт по умолчанию - просто добавляем в набор открытых
+  openFilterGroups.add("myGroupsFilters");
+
   // Первоначальная отрисовка
   renderFilteredSchedule();
   updateStats();
@@ -649,6 +927,8 @@ async function initializeApp() {
     // При изменении размера окна может понадобиться перерисовка
     renderFilteredSchedule();
   });
+
+  console.log("✅ Инициализация завершена! Групп загружено:", myGroups.size);
 }
 
 // Запуск приложения при загрузке DOM

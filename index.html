@@ -52,6 +52,39 @@
         </div>
 
         <div class="filters-content">
+          <!-- Фильтр "Мои группы" - добавлен первым -->
+          <div class="filter-group">
+            <div
+              class="filter-header"
+              onclick="toggleFilterGroup('myGroupsFilters')"
+            >
+              <label class="filter-label">⭐ Мои группы</label>
+              <div class="my-groups-header-controls">
+                <button
+                  class="my-groups-edit-btn"
+                  id="my-groups-edit-btn"
+                  onclick="event.stopPropagation(); toggleMyGroupsEditMode();"
+                  title="Редактировать мои группы"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="my-groups-save-btn"
+                  id="my-groups-save-btn"
+                  onclick="event.stopPropagation(); saveMyGroupsData();"
+                  title="Скачать обновленный JSON"
+                  style="display: none"
+                >
+                  💾
+                </button>
+                <button class="filter-toggle">▼</button>
+              </div>
+            </div>
+            <div class="filter-options expanded" id="myGroupsFilters">
+              <!-- Заполняется JavaScript -->
+            </div>
+          </div>
+
           <div class="filter-group">
             <div
               class="filter-header"
