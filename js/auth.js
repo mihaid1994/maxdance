@@ -1,8 +1,7 @@
 // js/auth.js - Supabase аутентификация
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Инициализация Supabase клиента
-// ВАЖНО: Замените на ваши данные из Supabase Dashboard
+// Инициализация Supabase клиента с ТВОИМИ данными
 const supabaseUrl = "https://rxwtfqnzrhzpiupkawgq.supabase.co";
 const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4d3RmcW56cmh6cGl1cGthd2dxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNDUzMDUsImV4cCI6MjA2NjkyMTMwNX0.AP3S-aRZDm2XD-Ld9aSSfxtIigV8hWXC3rXb7TUwxSI";
@@ -356,6 +355,19 @@ async function deletePersonalClass(classId) {
 function isAdmin() {
   return userProfile && userProfile.is_admin === true;
 }
+
+// Экспортируем функции глобально для совместимости
+window.signInWithGoogle = signInWithGoogle;
+window.logout = logout;
+window.currentUser = currentUser;
+window.userProfile = userProfile;
+window.getUserSavedGroups = getUserSavedGroups;
+window.saveUserGroups = saveUserGroups;
+window.getUserPersonalClasses = getUserPersonalClasses;
+window.createPersonalClass = createPersonalClass;
+window.updatePersonalClass = updatePersonalClass;
+window.deletePersonalClass = deletePersonalClass;
+window.isAdmin = isAdmin;
 
 // Экспортируем Supabase клиент для других модулей
 window.supabase = supabase;
