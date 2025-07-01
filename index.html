@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Расписание MaxDance</title>
     <link rel="stylesheet" href="./css/face.css" />
-    <!-- Подключаем auth.js как модуль -->
+    <!-- Подключаем auth.js как модуль (если есть) -->
     <script type="module" src="./js/auth.js"></script>
   </head>
   <body>
@@ -57,19 +57,9 @@
         </div>
       </div>
 
-      <!-- Floating Filter Button (ОБНОВЛЕНО) -->
-      <button
-        class="filter-fab"
-        id="filter-fab"
-        onclick="toggleMobileFilters()"
-      >
+      <!-- Floating Filter Button -->
+      <button class="filter-fab" id="filter-fab" onclick="toggleFilters()">
         <span class="filter-fab-icon">🔍</span>
-        <span
-          class="filter-fab-badge"
-          id="filter-fab-badge"
-          style="display: none"
-          >0</span
-        >
         <div class="filter-fab-content">
           <span class="filter-fab-title">Фильтры</span>
           <div class="filter-fab-tags" id="filter-fab-tags">
@@ -78,13 +68,16 @@
         </div>
       </button>
 
-      <!-- Filters Panel (ОБНОВЛЕНО) -->
-      <div class="filters" id="filters">
+      <!-- Off-canvas Filters -->
+      <div
+        class="filters-overlay"
+        id="filters-overlay"
+        onclick="closeFilters()"
+      ></div>
+      <div class="filters-sidebar" id="filters-sidebar">
         <div class="filters-header">
           <h3 class="filters-title">🔍 Фильтры</h3>
-          <button class="filters-close" onclick="toggleMobileFilters()">
-            ×
-          </button>
+          <button class="filters-close" onclick="closeFilters()">×</button>
         </div>
 
         <div class="filters-content">
@@ -107,11 +100,11 @@
                 <button
                   class="my-groups-save-btn"
                   id="my-groups-save-btn"
-                  onclick="event.stopPropagation(); addAllFilteredToMyGroups();"
-                  title="Добавить все отфильтрованные"
+                  onclick="event.stopPropagation(); saveMyGroupsData();"
+                  title="Сохранить группы"
                   style="display: none"
                 >
-                  ➕
+                  💾
                 </button>
                 <button class="filter-toggle">▼</button>
               </div>
@@ -179,8 +172,29 @@
         </div>
       </div>
 
-      <!-- Schedule Container (ОБНОВЛЕНО - изменен ID) -->
-      <div class="schedule-container" id="schedule">
+      <!-- Desktop Table View -->
+      <div class="table-container" id="table-container">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Время</th>
+              <th>Понедельник</th>
+              <th>Вторник</th>
+              <th>Среда</th>
+              <th>Четверг</th>
+              <th>Пятница</th>
+              <th>Суббота</th>
+              <th>Воскресенье</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body">
+            <!-- Заполняется JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Card View -->
+      <div class="mobile-schedule" id="mobile-schedule">
         <!-- Заполняется JavaScript -->
       </div>
 
@@ -189,20 +203,19 @@
       </div>
     </div>
 
-    <!-- Модальное окно деталей занятия (ОБНОВЛЕНО) -->
-    <div id="class-details-modal" class="modal" style="display: none">
+    <!-- Модальное окно -->
+    <div id="class-modal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeClassDetails()">&times;</span>
-        <div class="modal-header">
-          <h3>Детали занятия</h3>
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div class="modal-header" id="modal-title">
+          <!-- Заполняется JavaScript -->
         </div>
-        <div class="modal-body" id="class-details-content">
+        <div class="modal-body" id="modal-body">
           <!-- Заполняется JavaScript -->
         </div>
       </div>
     </div>
 
-    <!-- Подключаем basefucs.js как обычный скрипт -->
     <script src="./js/basefucs.js"></script>
   </body>
 </html>

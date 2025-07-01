@@ -2309,4 +2309,254 @@ body {
   }
 }
 
-/* === КОНЕЦ ФАЙЛА === */
+/* === ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ MAXDANCE V2.0 === */
+/* Добавьте в конец файла face.css */
+
+/* Секция аутентификации */
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 0 20px;
+}
+
+.auth-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid #f39c12;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  color: #f39c12;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9em;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(243, 156, 18, 0.2);
+}
+
+.auth-button:hover {
+  background: linear-gradient(145deg, #f39c12, #e67e22);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(248, 249, 250, 0.9)
+  );
+  border-radius: 25px;
+  border: 1px solid rgba(243, 156, 18, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #f39c12;
+  object-fit: cover;
+}
+
+.logout {
+  background: linear-gradient(145deg, #e74c3c, #c0392b);
+  color: white;
+  border-color: #e74c3c;
+  padding: 6px 12px;
+  font-size: 0.8em;
+}
+
+/* Индикатор администратора */
+.admin-indicator {
+  background: linear-gradient(145deg, #e74c3c, #c0392b);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+  animation: admin-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes admin-glow {
+  0% {
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+  }
+  100% {
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.6);
+  }
+}
+
+/* Кнопки действий на карточках */
+.class-actions,
+.admin-actions {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.class-item:hover .class-actions,
+.class-item:hover .admin-actions {
+  opacity: 1;
+}
+
+.add-to-personal-btn,
+.edit-class-btn,
+.delete-class-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  width: 18px;
+  height: 18px;
+  font-size: 0.7em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(5px);
+}
+
+.add-to-personal-btn:hover {
+  background: #3498db;
+  color: white;
+  transform: scale(1.1);
+}
+
+.edit-class-btn:hover {
+  background: #f39c12;
+  color: white;
+  transform: scale(1.1);
+}
+
+.delete-class-btn:hover {
+  background: #e74c3c;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Кнопки для персонального расписания и админ-панели */
+.personal-schedule-btn {
+  background: linear-gradient(145deg, #3498db, #2980b9) !important;
+  color: white !important;
+  border-color: #3498db !important;
+}
+
+.personal-schedule-btn:hover {
+  background: linear-gradient(145deg, #2980b9, #1f618d) !important;
+  transform: translateX(5px);
+}
+
+.admin-panel-btn {
+  background: linear-gradient(145deg, #9b59b6, #8e44ad) !important;
+  color: white !important;
+  border-color: #9b59b6 !important;
+}
+
+.admin-panel-btn:hover {
+  background: linear-gradient(145deg, #8e44ad, #7d3c98) !important;
+  transform: translateX(5px);
+}
+
+/* Система уведомлений */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 3000;
+  padding: 15px 20px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  animation: slideInRight 0.3s ease-out;
+  max-width: 400px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.success {
+  background: linear-gradient(145deg, #27ae60, #229954);
+  border-left: 4px solid #1e8449;
+}
+
+.notification.error {
+  background: linear-gradient(145deg, #e74c3c, #c0392b);
+  border-left: 4px solid #a93226;
+}
+
+.notification.info {
+  background: linear-gradient(145deg, #3498db, #2980b9);
+  border-left: 4px solid #1f618d;
+}
+
+/* Адаптивные стили для новых элементов */
+@media (max-width: 768px) {
+  .auth-section {
+    margin: 10px 0;
+    justify-content: center;
+  }
+
+  .auth-button {
+    padding: 8px 12px;
+    font-size: 0.8em;
+  }
+
+  .user-info {
+    padding: 6px 10px;
+  }
+
+  .user-avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .notification {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-section {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .auth-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .user-info {
+    width: 100%;
+    justify-content: center;
+  }
+}
