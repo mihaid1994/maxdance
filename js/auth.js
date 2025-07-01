@@ -30,11 +30,15 @@ async function initAuth() {
   supabase.auth.onAuthStateChange(async (event, session) => {
     console.log("🔄 Auth state changed:", event);
 
-    if (event === "SIGNED_IN" && session) {
+    // INITIAL_SESSION — начальная загрузка текущей сессии, её не сбрасываем
+    if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
       await handleAuthSuccess(session.user);
-    } else if (event === "SIGNED_OUT") {
+    }
+    // только на явный выход переходим в гостевой режим
+    else if (event === "SIGNED_OUT") {
       handleAuthSignOut();
     }
+    // все прочие события — игнорируем, не дергаем handleAuthSignOut
   });
 
   updateAuthUI();
