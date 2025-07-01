@@ -1007,6 +1007,71 @@ window.updateTeacher = updateTeacher;
 window.reloadScheduleWithAuth = reloadScheduleWithAuth;
 window.deletePersonalClassWithUpdate = deletePersonalClassWithUpdate;
 
+// === Быстрое редактирование занятия (для админа) ===
+async function editScheduleClassQuick(classId) {
+  if (!isAdmin()) {
+    return showNotification(
+      "❌ Доступ запрещён: требуются права администратора",
+      "error"
+    );
+  }
+  try {
+    const { data: classItem, error } = await supabase
+      .from("schedule_classes")
+      .select("*")
+      .eq("id", classId)
+      .single();
+    if (error) throw error;
+
+    const newName = prompt("Название занятия:", classItem.name);
+    if (newName == null) return; // отмена
+    const newLevel = prompt("Уровень:", classItem.level) || classItem.level;
+    const newTeacher =
+      prompt("Преподаватель:", classItem.teacher) || classItem.teacher;
+    const newLocation =
+      prompt("Локация:", classItem.location) || classItem.location;
+
+    await updateScheduleClass(classId, {
+      name: newName,
+      level: newLevel,
+      teacher: newTeacher,
+      type: classItem.type,
+      location: newLocation,
+      day_of_week: classItem.day_of_week,
+      time_slot: classItem.time_slot,
+    });
+
+    await reloadScheduleWithAuth();
+    showNotification("✅ Занятие обновлено", "success");
+  } catch (err) {
+    console.error("❌ Ошибка быстрой правки занятия:", err);
+    showNotification("❌ Не удалось обновить занятие: " + err.message, "error");
+  }
+}
+
+// === Быстрое удаление занятия (для админа) ===
+async function deleteScheduleClassQuick(classId) {
+  if (!isAdmin()) {
+    return showNotification(
+      "❌ Доступ запрещён: требуются права администратора",
+      "error"
+    );
+  }
+  if (!confirm("Вы уверены, что хотите удалить это занятие?")) return;
+  try {
+    await deleteScheduleClass(classId);
+    await reloadScheduleWithAuth();
+    showNotification("✅ Занятие удалено", "success");
+  } catch (err) {
+    console.error("❌ Ошибка удаления занятия:", err);
+    showNotification("❌ Не удалось удалить занятие: " + err.message, "error");
+  }
+}
+
+// Экспорт новых функций
+window.editScheduleClassQuick = editScheduleClassQuick;
+window.deleteScheduleClassQuick = deleteScheduleClassQuick;
+
 // Экспортируем Supabase клиент для других модулей
 window.supabase = supabase;
 
