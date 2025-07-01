@@ -1,8 +1,9 @@
-// ---------------------------------------------
-// Патчи для отсутствующих функций и кнопок
-// ---------------------------------------------
+// -------------------------------------------------
+// filters-patches.js
+// Подключать после basefucs.js и auth.js
+// -------------------------------------------------
 
-// 1) Собираем данные для создания кнопок-фильтров
+// 1) Собираем teachers/levels/types/locations
 function extractAllData() {
   const teachers = new Set(),
     levels = new Set(),
@@ -11,8 +12,8 @@ function extractAllData() {
 
   for (const time of timeSlots || []) {
     for (let d = 0; d < (dayNames || []).length; d++) {
-      const arr = (scheduleData[time] && scheduleData[time][d]) || [];
-      arr.forEach((c) => {
+      const list = (scheduleData[time] && scheduleData[time][d]) || [];
+      list.forEach((c) => {
         if (c.teacher) teachers.add(c.teacher);
         if (c.level) levels.add(c.level);
         if (c.type) types.add(c.type);
@@ -30,7 +31,42 @@ function extractAllData() {
 }
 window.extractAllData = extractAllData;
 
-// 2) СreateFilterButtons — заполняем filters-sidebar кнопками
+// 2) Фильтрующая функция — возвращает true, если item проходит все активные фильтры
+function matchesFilters(item, time, day) {
+  // myGroups-only
+  if (activeFilters.showMyGroupsOnly) {
+    const key = item.id
+      ? `db_${item.id}`
+      : `${item.name}_${item.level}_${item.teacher}_${item.location}_${time}_${day}`;
+    if (!myGroups.has(key)) return false;
+  }
+  // teachers
+  if (
+    activeFilters.teachers.size &&
+    !activeFilters.teachers.has(item.teacher)
+  ) {
+    return false;
+  }
+  // levels
+  if (activeFilters.levels.size && !activeFilters.levels.has(item.level)) {
+    return false;
+  }
+  // types
+  if (activeFilters.types.size && !activeFilters.types.has(item.type)) {
+    return false;
+  }
+  // locations
+  if (
+    activeFilters.locations.size &&
+    !activeFilters.locations.has(item.location)
+  ) {
+    return false;
+  }
+  return true;
+}
+window.matchesFilters = matchesFilters;
+
+// 3) Создаём кнопки-фильтры
 function createFilterButtons(container, items, filterKey) {
   if (!container) return;
   container.innerHTML = "";
@@ -55,16 +91,15 @@ function createFilterButtons(container, items, filterKey) {
 }
 window.createFilterButtons = createFilterButtons;
 
-// 3) renderFilteredSchedule — перерисовка расписания
+// 4) Рендер расписания (desktop + mobile)
 function renderFilteredSchedule() {
-  // Если у вас два разных рендера для desktop/mobile —
-  // просто вызовите их оба или объедините логику здесь.
+  // если у вас два разных рендера — вызывайте их оба
   if (typeof renderDesktopSchedule === "function") renderDesktopSchedule();
   if (typeof renderMobileSchedule === "function") renderMobileSchedule();
 }
 window.renderFilteredSchedule = renderFilteredSchedule;
 
-// 4) updateFilterFab — обновляем «иконку» FAB-фильтров
+// 5) Обновляем счётчик на FAB-кнопке
 function updateFilterFab() {
   const count =
     (activeFilters.showMyGroupsOnly ? 1 : 0) +
@@ -73,20 +108,19 @@ function updateFilterFab() {
     activeFilters.types.size +
     activeFilters.locations.size;
   const tags = document.getElementById("filter-fab-tags");
-  if (!tags) return;
-  tags.innerHTML = count > 0 ? `(${count})` : "";
+  if (tags) tags.textContent = count > 0 ? `(${count})` : "";
 }
 window.updateFilterFab = updateFilterFab;
 
-// 5) toggleMyGroupsEditMode — переключаем режим редактирования «Моих групп»
+// 6) Режим редактирования «Моих групп»
 function toggleMyGroupsEditMode() {
   isSelectMode = !isSelectMode;
   tempSelectedGroups.clear();
-  createMyGroupsControls(); // перерисуем controls
+  createMyGroupsControls();
 }
 window.toggleMyGroupsEditMode = toggleMyGroupsEditMode;
 
-// 6) clearAllFilters — сброс всех фильтров
+// 7) Сброс всех фильтров
 function clearAllFilters() {
   activeFilters = {
     teachers: new Set(),
@@ -104,12 +138,13 @@ function clearAllFilters() {
 }
 window.clearAllFilters = clearAllFilters;
 
-// 7) toggleFilters / closeFilters — off-canvas поведение
+// 8) Off-canvas open/close
 function toggleFilters() {
   document.getElementById("filters-overlay").classList.toggle("active");
   document.getElementById("filters-sidebar").classList.toggle("active");
 }
 window.toggleFilters = toggleFilters;
+
 function closeFilters() {
   document.getElementById("filters-overlay").classList.remove("active");
   document.getElementById("filters-sidebar").classList.remove("active");
