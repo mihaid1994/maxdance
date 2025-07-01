@@ -261,9 +261,6 @@ function createClassItem(classData, time, day) {
   return result;
 }
 
-// 4. Принудительно перерендерим расписание:
-renderFilteredSchedule();
-
 // === ФУНКЦИИ ДЛЯ РАБОТЫ С ПЕРСОНАЛЬНЫМ РАСПИСАНИЕМ ===
 
 // Добавление занятия в персональное расписание
