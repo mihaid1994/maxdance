@@ -2028,3 +2028,16 @@ body {
     font-size: 0.8em;
   }
 }
+
+/* off-canvas фильтры */
+.filters-overlay,
+.filters-sidebar {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+.filters-overlay.active,
+.filters-sidebar.active {
+  visibility: visible;
+  opacity: 1;
+}
