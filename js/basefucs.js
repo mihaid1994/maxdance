@@ -86,8 +86,13 @@ async function loadData() {
     let data;
 
     try {
-      // Пытаемся загрузить из базы данных (если доступна)
-      if (typeof loadScheduleFromDatabase === "function") {
+      // Пытаемся загрузить из базы данных с персональными занятиями
+      if (typeof loadScheduleWithPersonalClasses === "function") {
+        data = await loadScheduleWithPersonalClasses();
+        console.log(
+          "✅ Данные загружены из базы данных с персональными занятиями"
+        );
+      } else if (typeof loadScheduleFromDatabase === "function") {
         data = await loadScheduleFromDatabase();
         console.log("✅ Данные загружены из базы данных");
       } else {
@@ -139,6 +144,9 @@ async function loadData() {
 // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
 
 function getClassKey(classItem, time, day) {
+  if (classItem.isPersonal) {
+    return `personal_${classItem.personalId}`;
+  }
   if (classItem.id) {
     return `db_${classItem.id}`;
   }
@@ -158,6 +166,11 @@ function extractAllData() {
   Object.values(scheduleData).forEach((timeData) => {
     Object.values(timeData).forEach((dayClasses) => {
       dayClasses.forEach((classItem) => {
+        // Показываем персональные занятия только их создателю
+        if (classItem.isPersonal && classItem.userId !== currentUser?.id) {
+          return;
+        }
+
         const teacherList = classItem.teacher
           .split(/[,/]|\sи\s/)
           .map((t) => t.trim());
@@ -177,6 +190,11 @@ function extractAllData() {
 }
 
 function matchesFilters(classItem, time, day) {
+  // Персональные занятия видны только их создателю
+  if (classItem.isPersonal && classItem.userId !== currentUser?.id) {
+    return false;
+  }
+
   if (activeFilters.showMyGroupsOnly) {
     const classKey = getClassKey(classItem, time, day);
     return myGroups.has(classKey);
@@ -222,6 +240,11 @@ function createClassItem(classData, time, day) {
   let additionalClasses = "";
   let showStar = false;
 
+  // Специальный стиль для персональных занятий
+  if (classData.isPersonal) {
+    additionalClasses += " personal-class";
+  }
+
   if (isSelectMode) {
     const isCurrentlySelected = tempSelectedGroups.has(classKey);
     if (isCurrentlySelected) {
@@ -236,24 +259,38 @@ function createClassItem(classData, time, day) {
 
   // Кнопки для авторизованных пользователей
   let actionButtons = "";
-  if (
-    currentUser &&
-    !isSelectMode &&
-    typeof addToPersonalSchedule === "function"
-  ) {
-    const safeClassData = JSON.stringify(classData).replace(/"/g, "&quot;");
-    actionButtons = `
-      <div class="class-actions">
-        <button class="add-to-personal-btn" 
-                onclick="event.stopPropagation(); addToPersonalSchedule(${safeClassData}, '${time}', ${day})"
-                title="Добавить в персональное расписание">➕</button>
-      </div>
-    `;
+  if (currentUser && !isSelectMode) {
+    if (classData.isPersonal && classData.userId === currentUser.id) {
+      // Кнопки для персональных занятий (только для создателя)
+      actionButtons = `
+        <div class="class-actions">
+          <button class="edit-personal-btn" 
+                  onclick="event.stopPropagation(); editPersonalClass(${classData.personalId})"
+                  title="Редактировать занятие">✏️</button>
+          <button class="delete-personal-btn" 
+                  onclick="event.stopPropagation(); deletePersonalClassQuick(${classData.personalId})"
+                  title="Удалить занятие">🗑️</button>
+        </div>
+      `;
+    } else if (
+      !classData.isPersonal &&
+      typeof addToPersonalSchedule === "function"
+    ) {
+      // Кнопки для обычных занятий
+      const safeClassData = JSON.stringify(classData).replace(/"/g, "&quot;");
+      actionButtons = `
+        <div class="class-actions">
+          <button class="add-to-personal-btn" 
+                  onclick="event.stopPropagation(); addToPersonalSchedule(${safeClassData}, '${time}', ${day})"
+                  title="Добавить в персональное расписание">➕</button>
+        </div>
+      `;
+    }
   }
 
-  // Кнопки админа
+  // Кнопки админа (только для обычных занятий)
   let adminButtons = "";
-  if (isAdmin() && !isSelectMode && classData.id) {
+  if (isAdmin() && !isSelectMode && classData.id && !classData.isPersonal) {
     adminButtons = `
       <div class="admin-actions">
         <button class="edit-class-btn" 
@@ -273,11 +310,17 @@ function createClassItem(classData, time, day) {
       )}, '${time}', ${day}, this)`
     : `showClassDetails('${classData.name}', '${classData.level}', '${classData.teacher}', '${classData.location}')`;
 
+  // Добавляем индикатор персонального занятия
+  const personalIndicator = classData.isPersonal
+    ? '<div class="personal-indicator">👤</div>'
+    : "";
+
   return `
     <div class="class-item ${
       classData.type
     }${additionalClasses}" onclick="${clickHandler}">
       ${showStar ? '<div class="my-group-star">⭐</div>' : ""}
+      ${personalIndicator}
       <div class="class-location ${locationClass}">${locationText}</div>
       <div class="class-name">${classData.name}</div>
       <div class="class-level">${classData.level}</div>
@@ -288,7 +331,7 @@ function createClassItem(classData, time, day) {
   `;
 }
 
-// === РЕНДЕРИНГ РАСПИСАНИЯ (ВАША РАБОЧАЯ ВЕРСИЯ) ===
+// === РЕНДЕРИНГ РАСПИСАНИЯ ===
 
 function renderTableSchedule() {
   const tbody = document.getElementById("schedule-body");
@@ -502,7 +545,10 @@ function toggleMyGroupsEditMode() {
     editBtn.textContent = "❌";
     editBtn.title = "Отменить выбор групп";
     saveBtn.style.display = "flex";
-    tempSelectedGroups.clear();
+
+    // ИСПРАВЛЕНИЕ: Предзаполняем текущие группы для редактирования
+    tempSelectedGroups = new Set(myGroups);
+
     showMyGroupsInstructions();
   } else {
     editBtn.classList.remove("active");
@@ -534,31 +580,16 @@ async function saveMyGroupsData() {
   if (!isSelectMode) return;
 
   try {
-    myGroups = new Set(tempSelectedGroups);
-
     if (currentUser && typeof saveUserGroups === "function") {
-      await saveUserGroups([...myGroups]);
-      alert(`✅ Группы сохранены! Выбрано: ${myGroups.size}`);
-    } else {
-      // Fallback к JSON скачиванию
-      const response = await fetch("./data/data.json");
-      const data = await response.json();
-      data.myGroups = Array.from(myGroups);
+      await saveUserGroups([...tempSelectedGroups]);
+      myGroups = new Set(tempSelectedGroups);
 
-      const dataStr = JSON.stringify(data, null, 2);
-      const dataBlob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "data.json";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      alert(
-        `✅ Группы сохранены! Выбрано: ${myGroups.size}\nФайл data.json скачан.`
+      showNotification(
+        `✅ Группы сохранены! Выбрано: ${myGroups.size}`,
+        "success"
       );
+    } else {
+      throw new Error("Пользователь не авторизован или функция недоступна");
     }
 
     toggleMyGroupsEditMode();
@@ -568,7 +599,10 @@ async function saveMyGroupsData() {
     updateFilterFab();
   } catch (error) {
     console.error("❌ Ошибка сохранения:", error);
-    alert("❌ Ошибка при сохранении групп: " + error.message);
+    showNotification(
+      "❌ Ошибка при сохранении групп: " + error.message,
+      "error"
+    );
   }
 }
 
@@ -595,10 +629,7 @@ function createMyGroupsControls() {
   toggleButton.id = "my-groups-toggle";
   toggleButton.className = "filter-button my-groups-main-toggle";
 
-  const groupsText =
-    currentUser && userProfile
-      ? `⭐ Мои группы (${myGroups.size})`
-      : `⭐ Показать только мои группы (${myGroups.size})`;
+  const groupsText = `⭐ Мои группы (${myGroups.size})`;
   toggleButton.textContent = groupsText;
 
   if (activeFilters.showMyGroupsOnly) {
@@ -609,6 +640,13 @@ function createMyGroupsControls() {
 
   // Кнопки для авторизованных пользователей
   if (currentUser) {
+    // Кнопка создания персонального занятия
+    const createPersonalButton = document.createElement("button");
+    createPersonalButton.className = "filter-button create-personal-btn";
+    createPersonalButton.textContent = "➕ Создать занятие";
+    createPersonalButton.onclick = showCreatePersonalClassModal;
+    container.appendChild(createPersonalButton);
+
     const personalScheduleButton = document.createElement("button");
     personalScheduleButton.className = "filter-button personal-schedule-btn";
     personalScheduleButton.textContent = "📅 Персональное расписание";
@@ -634,14 +672,75 @@ function createMyGroupsControls() {
   if (myGroups.size === 0) {
     const message = document.createElement("div");
     message.className = "no-groups-message";
-    message.textContent = currentUser
-      ? "Группы не выбраны. Используйте кнопку редактирования для добавления."
-      : "Группы не выбраны. Войдите в аккаунт или используйте кнопку редактирования.";
+    message.textContent =
+      "Группы не выбраны. Используйте кнопку редактирования для добавления.";
     container.appendChild(message);
+  } else {
+    // Показываем список групп с возможностью удаления
+    const groupsList = document.createElement("div");
+    groupsList.className = "my-groups-list";
+
+    myGroups.forEach((groupKey) => {
+      const groupItem = document.createElement("div");
+      groupItem.className = "my-group-item";
+
+      // Находим информацию о группе по ключу
+      const groupInfo = findGroupByKey(groupKey);
+      const displayText = groupInfo
+        ? `${groupInfo.name} (${groupInfo.level}) - ${groupInfo.teacher}`
+        : groupKey;
+
+      groupItem.innerHTML = `
+        <span class="group-text">${displayText}</span>
+        <button class="remove-group-btn" onclick="removeFromMyGroups('${groupKey}')" title="Удалить группу">🗑️</button>
+      `;
+
+      groupsList.appendChild(groupItem);
+    });
+
+    container.appendChild(groupsList);
   }
 
   if (isSelectMode) {
     showMyGroupsInstructions();
+  }
+}
+
+// Новая функция для поиска группы по ключу
+function findGroupByKey(groupKey) {
+  for (const time of timeSlots) {
+    for (let day = 0; day < daysCount; day++) {
+      if (scheduleData[time] && scheduleData[time][day]) {
+        const found = scheduleData[time][day].find((cls) => {
+          return getClassKey(cls, time, day) === groupKey;
+        });
+        if (found) return found;
+      }
+    }
+  }
+  return null;
+}
+
+// Новая функция для удаления группы
+async function removeFromMyGroups(groupKey) {
+  if (!currentUser) {
+    showNotification("❌ Требуется авторизация", "error");
+    return;
+  }
+
+  try {
+    myGroups.delete(groupKey);
+    await saveUserGroups([...myGroups]);
+
+    createMyGroupsControls();
+    renderFilteredSchedule();
+    updateStats();
+    updateFilterFab();
+
+    showNotification("✅ Группа удалена", "success");
+  } catch (error) {
+    console.error("❌ Ошибка удаления группы:", error);
+    showNotification("❌ Ошибка удаления группы: " + error.message, "error");
   }
 }
 
@@ -666,6 +765,267 @@ function hideMyGroupsInstructions() {
   const instructionDiv = container.querySelector(".select-mode-instructions");
   if (instructionDiv) {
     instructionDiv.remove();
+  }
+}
+
+// === ПЕРСОНАЛЬНЫЕ ЗАНЯТИЯ ===
+
+// Новая функция для создания персонального занятия
+function showCreatePersonalClassModal() {
+  const modalHtml = `
+    <div id="personal-class-modal" class="modal" style="display: block;">
+      <div class="modal-content">
+        <span class="close" onclick="closePersonalClassModal()">&times;</span>
+        <div class="modal-header">Создать персональное занятие</div>
+        <div class="modal-body">
+          <form id="personal-class-form">
+            <div class="form-group">
+              <label>Название занятия:</label>
+              <input type="text" id="personal-name" required>
+            </div>
+            <div class="form-group">
+              <label>Уровень:</label>
+              <input type="text" id="personal-level" placeholder="Например: Начинающие">
+            </div>
+            <div class="form-group">
+              <label>Преподаватель:</label>
+              <input type="text" id="personal-teacher" placeholder="Ваше имя или преподаватель">
+            </div>
+            <div class="form-group">
+              <label>Локация:</label>
+              <select id="personal-location">
+                <option value="8 марта">ул. 8 Марта (Мытный Двор)</option>
+                <option value="либкнехта">ул. К.Либкнехта (Консул)</option>
+                <option value="дома">Дома</option>
+                <option value="другое">Другое место</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>День недели:</label>
+              <select id="personal-day" required>
+                <option value="0">Понедельник</option>
+                <option value="1">Вторник</option>
+                <option value="2">Среда</option>
+                <option value="3">Четверг</option>
+                <option value="4">Пятница</option>
+                <option value="5">Суббота</option>
+                <option value="6">Воскресенье</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Время:</label>
+              <input type="time" id="personal-time" required>
+            </div>
+            <div class="form-actions">
+              <button type="button" onclick="closePersonalClassModal()">Отмена</button>
+              <button type="submit">Создать</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+  document.getElementById("personal-class-form").onsubmit = async function (e) {
+    e.preventDefault();
+    await createPersonalClass();
+  };
+}
+
+function closePersonalClassModal() {
+  const modal = document.getElementById("personal-class-modal");
+  if (modal) {
+    modal.remove();
+  }
+}
+
+async function createPersonalClass() {
+  try {
+    const classData = {
+      name: document.getElementById("personal-name").value,
+      level: document.getElementById("personal-level").value || "Персональное",
+      teacher: document.getElementById("personal-teacher").value || "Я",
+      location: document.getElementById("personal-location").value,
+      day_of_week: parseInt(document.getElementById("personal-day").value),
+      time_slot: document.getElementById("personal-time").value,
+      type: "personal",
+    };
+
+    const newClass = await window.createPersonalClass(classData);
+
+    // Добавляем в мои группы автоматически
+    const classKey = `personal_${newClass.id}`;
+    myGroups.add(classKey);
+    await saveUserGroups([...myGroups]);
+
+    closePersonalClassModal();
+    await reloadScheduleWithAuth();
+    createMyGroupsControls();
+    renderFilteredSchedule();
+    updateStats();
+    updateFilterFab();
+
+    showNotification("✅ Персональное занятие создано!", "success");
+  } catch (error) {
+    console.error("❌ Ошибка создания занятия:", error);
+    showNotification("❌ Ошибка создания занятия: " + error.message, "error");
+  }
+}
+
+// Новая функция для редактирования персонального занятия
+async function editPersonalClass(personalId) {
+  try {
+    const classData = await window.getPersonalClassById(personalId);
+
+    const modalHtml = `
+      <div id="edit-personal-class-modal" class="modal" style="display: block;">
+        <div class="modal-content">
+          <span class="close" onclick="closeEditPersonalClassModal()">&times;</span>
+          <div class="modal-header">Редактировать персональное занятие</div>
+          <div class="modal-body">
+            <form id="edit-personal-class-form">
+              <div class="form-group">
+                <label>Название занятия:</label>
+                <input type="text" id="edit-personal-name" value="${
+                  classData.name
+                }" required>
+              </div>
+              <div class="form-group">
+                <label>Уровень:</label>
+                <input type="text" id="edit-personal-level" value="${
+                  classData.level
+                }" placeholder="Например: Начинающие">
+              </div>
+              <div class="form-group">
+                <label>Преподаватель:</label>
+                <input type="text" id="edit-personal-teacher" value="${
+                  classData.teacher
+                }" placeholder="Ваше имя или преподаватель">
+              </div>
+              <div class="form-group">
+                <label>Локация:</label>
+                <select id="edit-personal-location">
+                  <option value="8 марта" ${
+                    classData.location === "8 марта" ? "selected" : ""
+                  }>ул. 8 Марта (Мытный Двор)</option>
+                  <option value="либкнехта" ${
+                    classData.location === "либкнехта" ? "selected" : ""
+                  }>ул. К.Либкнехта (Консул)</option>
+                  <option value="дома" ${
+                    classData.location === "дома" ? "selected" : ""
+                  }>Дома</option>
+                  <option value="другое" ${
+                    classData.location === "другое" ? "selected" : ""
+                  }>Другое место</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>День недели:</label>
+                <select id="edit-personal-day" required>
+                  <option value="0" ${
+                    classData.day_of_week === 0 ? "selected" : ""
+                  }>Понедельник</option>
+                  <option value="1" ${
+                    classData.day_of_week === 1 ? "selected" : ""
+                  }>Вторник</option>
+                  <option value="2" ${
+                    classData.day_of_week === 2 ? "selected" : ""
+                  }>Среда</option>
+                  <option value="3" ${
+                    classData.day_of_week === 3 ? "selected" : ""
+                  }>Четверг</option>
+                  <option value="4" ${
+                    classData.day_of_week === 4 ? "selected" : ""
+                  }>Пятница</option>
+                  <option value="5" ${
+                    classData.day_of_week === 5 ? "selected" : ""
+                  }>Суббота</option>
+                  <option value="6" ${
+                    classData.day_of_week === 6 ? "selected" : ""
+                  }>Воскресенье</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Время:</label>
+                <input type="time" id="edit-personal-time" value="${
+                  classData.time_slot
+                }" required>
+              </div>
+              <div class="form-actions">
+                <button type="button" onclick="closeEditPersonalClassModal()">Отмена</button>
+                <button type="submit">Сохранить</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+    document.getElementById("edit-personal-class-form").onsubmit =
+      async function (e) {
+        e.preventDefault();
+        await updatePersonalClassData(personalId);
+      };
+  } catch (error) {
+    console.error("❌ Ошибка загрузки данных занятия:", error);
+    showNotification(
+      "❌ Ошибка загрузки данных занятия: " + error.message,
+      "error"
+    );
+  }
+}
+
+function closeEditPersonalClassModal() {
+  const modal = document.getElementById("edit-personal-class-modal");
+  if (modal) {
+    modal.remove();
+  }
+}
+
+async function updatePersonalClassData(personalId) {
+  try {
+    const updatedData = {
+      name: document.getElementById("edit-personal-name").value,
+      level:
+        document.getElementById("edit-personal-level").value || "Персональное",
+      teacher: document.getElementById("edit-personal-teacher").value || "Я",
+      location: document.getElementById("edit-personal-location").value,
+      day_of_week: parseInt(document.getElementById("edit-personal-day").value),
+      time_slot: document.getElementById("edit-personal-time").value,
+      type: "personal",
+    };
+
+    await window.updatePersonalClass(personalId, updatedData);
+
+    closeEditPersonalClassModal();
+    await reloadScheduleWithAuth();
+    renderFilteredSchedule();
+    updateStats();
+    updateFilterFab();
+
+    showNotification("✅ Персональное занятие обновлено!", "success");
+  } catch (error) {
+    console.error("❌ Ошибка обновления занятия:", error);
+    showNotification("❌ Ошибка обновления занятия: " + error.message, "error");
+  }
+}
+
+// Новая функция для быстрого удаления персонального занятия
+async function deletePersonalClassQuick(personalId) {
+  if (!confirm("Вы уверены, что хотите удалить это персональное занятие?")) {
+    return;
+  }
+
+  try {
+    await window.deletePersonalClassWithUpdate(personalId);
+    showNotification("✅ Персональное занятие удалено", "success");
+  } catch (error) {
+    console.error("❌ Ошибка удаления:", error);
+    showNotification("❌ Ошибка удаления занятия: " + error.message, "error");
   }
 }
 
@@ -827,6 +1187,19 @@ function toggleMobileDay(dayIndex) {
       collapsedMobileDays.add(dayIndex);
     }
   }
+}
+
+// Функция для показа уведомлений
+function showNotification(message, type = "info") {
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
 }
 
 // === МОДАЛЬНОЕ ОКНО ===
@@ -995,8 +1368,22 @@ document.addEventListener("keydown", function (event) {
   if (event.key === "Escape") {
     closeModal();
     closeFilters();
+    closePersonalClassModal();
+    closeEditPersonalClassModal();
   }
 });
+
+// === ЭКСПОРТ ФУНКЦИЙ ===
+
+window.removeFromMyGroups = removeFromMyGroups;
+window.showCreatePersonalClassModal = showCreatePersonalClassModal;
+window.closePersonalClassModal = closePersonalClassModal;
+window.createPersonalClass = createPersonalClass;
+window.editPersonalClass = editPersonalClass;
+window.closeEditPersonalClassModal = closeEditPersonalClassModal;
+window.updatePersonalClassData = updatePersonalClassData;
+window.deletePersonalClassQuick = deletePersonalClassQuick;
+window.showNotification = showNotification;
 
 // Запуск приложения
 document.addEventListener("DOMContentLoaded", initializeApp);

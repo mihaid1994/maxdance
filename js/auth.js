@@ -464,6 +464,150 @@ async function loadScheduleFromDatabase() {
   }
 }
 
+// Обновленная функция для загрузки расписания с персональными занятиями
+async function loadScheduleWithPersonalClasses() {
+  try {
+    console.log("🔄 Загрузка расписания с персональными занятиями...");
+
+    // Загружаем общее расписание
+    const scheduleResult = await loadScheduleFromDatabase();
+
+    // Если пользователь авторизован, добавляем его персональные занятия
+    if (currentUser) {
+      const personalClasses = await getUserPersonalClasses();
+      console.log(`📋 Найдено ${personalClasses.length} персональных занятий`);
+
+      personalClasses.forEach((personalClass) => {
+        const time = personalClass.time_slot;
+        const day = personalClass.day_of_week;
+
+        // Убеждаемся что временной слот существует в расписании
+        if (!scheduleResult.timeSlots.includes(time)) {
+          scheduleResult.timeSlots.push(time);
+          scheduleResult.timeSlots.sort((a, b) => {
+            const timeA =
+              parseInt(a.split(":")[0]) * 60 + parseInt(a.split(":")[1]);
+            const timeB =
+              parseInt(b.split(":")[0]) * 60 + parseInt(b.split(":")[1]);
+            return timeA - timeB;
+          });
+        }
+
+        // Инициализируем структуру если не существует
+        if (!scheduleResult.schedule[time]) {
+          scheduleResult.schedule[time] = {};
+        }
+        if (!scheduleResult.schedule[time][day]) {
+          scheduleResult.schedule[time][day] = [];
+        }
+
+        // Преобразуем персональное занятие в формат расписания
+        const scheduleClass = {
+          id: `personal_${personalClass.id}`,
+          name: personalClass.name,
+          level: personalClass.level,
+          teacher: personalClass.teacher,
+          type: personalClass.type || "personal",
+          location: personalClass.location,
+          isPersonal: true,
+          personalId: personalClass.id,
+          userId: personalClass.user_id,
+        };
+
+        scheduleResult.schedule[time][day].push(scheduleClass);
+
+        // Добавляем тип персональных занятий если его нет
+        if (!scheduleResult.typeNames["personal"]) {
+          scheduleResult.typeNames["personal"] = "Персональные";
+        }
+      });
+    }
+
+    return scheduleResult;
+  } catch (error) {
+    console.error(
+      "❌ Ошибка загрузки расписания с персональными занятиями:",
+      error
+    );
+    // Fallback к обычной загрузке
+    return await loadScheduleFromDatabase();
+  }
+}
+
+// Функция для перезагрузки расписания после авторизации
+async function reloadScheduleWithAuth() {
+  if (typeof window.loadData === "function") {
+    await window.loadData();
+    if (typeof window.renderFilteredSchedule === "function") {
+      window.renderFilteredSchedule();
+    }
+    if (typeof window.updateStats === "function") {
+      window.updateStats();
+    }
+    if (typeof window.updateFilterFab === "function") {
+      window.updateFilterFab();
+    }
+    if (typeof window.createMyGroupsControls === "function") {
+      window.createMyGroupsControls();
+    }
+  }
+}
+
+// Функция для удаления персонального занятия с обновлением UI
+async function deletePersonalClassWithUpdate(personalId) {
+  if (!currentUser) {
+    throw new Error("Пользователь не авторизован");
+  }
+
+  try {
+    await deletePersonalClass(personalId);
+
+    // Удаляем из моих групп если там есть
+    const personalKey = `personal_${personalId}`;
+    if (
+      typeof window.myGroups !== "undefined" &&
+      window.myGroups.has(personalKey)
+    ) {
+      window.myGroups.delete(personalKey);
+      await saveUserGroups([...window.myGroups]);
+    }
+
+    // Перезагружаем интерфейс
+    await reloadScheduleWithAuth();
+
+    console.log("✅ Персональное занятие удалено и интерфейс обновлен");
+    return true;
+  } catch (error) {
+    console.error("❌ Ошибка удаления персонального занятия:", error);
+    throw error;
+  }
+}
+
+// Получение персонального занятия по ID
+async function getPersonalClassById(personalId) {
+  if (!currentUser) {
+    throw new Error("Пользователь не авторизован");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("user_personal_classes")
+      .select("*")
+      .eq("id", personalId)
+      .eq("user_id", currentUser.id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка получения персонального занятия:", error);
+    throw error;
+  }
+}
+
 // === ДОПОЛНИТЕЛЬНАЯ ОТЛАДОЧНАЯ ФУНКЦИЯ ===
 // Добавьте эту функцию в basefucs.js для отладки:
 
@@ -840,9 +984,11 @@ window.getUserPersonalClasses = getUserPersonalClasses;
 window.createPersonalClass = createPersonalClass;
 window.updatePersonalClass = updatePersonalClass;
 window.deletePersonalClass = deletePersonalClass;
+window.getPersonalClassById = getPersonalClassById;
 
 // Экспортируем функции работы с общим расписанием
 window.loadScheduleFromDatabase = loadScheduleFromDatabase;
+window.loadScheduleWithPersonalClasses = loadScheduleWithPersonalClasses;
 window.loadReferenceData = loadReferenceData;
 window.createScheduleClass = createScheduleClass;
 window.updateScheduleClass = updateScheduleClass;
@@ -856,6 +1002,10 @@ window.createLocation = createLocation;
 window.updateLocation = updateLocation;
 window.createTeacher = createTeacher;
 window.updateTeacher = updateTeacher;
+
+// Экспортируем новые функции
+window.reloadScheduleWithAuth = reloadScheduleWithAuth;
+window.deletePersonalClassWithUpdate = deletePersonalClassWithUpdate;
 
 // Экспортируем Supabase клиент для других модулей
 window.supabase = supabase;
