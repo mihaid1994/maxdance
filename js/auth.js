@@ -11,6 +11,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 let currentUser = null;
 let userProfile = null;
 
+// === БАЗОВАЯ АУТЕНТИФИКАЦИЯ ===
+
 // Инициализация аутентификации
 async function initAuth() {
   console.log("🔐 Инициализация аутентификации...");
@@ -174,6 +176,8 @@ function updateAuthUI() {
   }
 }
 
+// === ФУНКЦИИ РАБОТЫ С ПОЛЬЗОВАТЕЛЬСКИМИ ГРУППАМИ ===
+
 // Получение сохраненных групп пользователя
 async function getUserSavedGroups() {
   if (!currentUser) return [];
@@ -238,6 +242,8 @@ async function saveUserGroups(groupKeys) {
     throw error;
   }
 }
+
+// === ФУНКЦИИ РАБОТЫ С ПЕРСОНАЛЬНЫМИ ЗАНЯТИЯМИ ===
 
 // Получение личных занятий пользователя
 async function getUserPersonalClasses() {
@@ -357,23 +363,468 @@ async function deletePersonalClass(classId) {
   }
 }
 
+// === ФУНКЦИИ РАБОТЫ С ОБЩИМ РАСПИСАНИЕМ ===
+
+// Загрузка общего расписания из базы данных
+async function loadScheduleFromDatabase() {
+  try {
+    console.log("📡 Загрузка расписания из базы данных...");
+
+    // Загружаем активные занятия
+    const { data: classes, error: classesError } = await supabase
+      .from("schedule_classes")
+      .select("*")
+      .eq("is_active", true)
+      .order("day_of_week", { ascending: true })
+      .order("time_slot", { ascending: true });
+
+    if (classesError) {
+      throw classesError;
+    }
+
+    // Загружаем справочники
+    const { data: classTypes, error: typesError } = await supabase
+      .from("class_types")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    const { data: locations, error: locationsError } = await supabase
+      .from("locations")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (typesError || locationsError) {
+      throw typesError || locationsError;
+    }
+
+    // Преобразуем данные в формат, совместимый с существующим кодом
+    const schedule = {};
+    const timeSlots = new Set();
+    const dayNames = [
+      "Понедельник",
+      "Вторник",
+      "Среда",
+      "Четверг",
+      "Пятница",
+      "Суббота",
+      "Воскресенье",
+    ];
+
+    // Создаем объект типов
+    const typeNames = {};
+    classTypes.forEach((type) => {
+      typeNames[type.id] = type.display_name;
+    });
+
+    // Создаем объект локаций
+    const locationNames = {};
+    locations.forEach((location) => {
+      locationNames[location.id] = location.display_name;
+    });
+
+    // Группируем занятия по времени и дням
+    classes.forEach((classItem) => {
+      const time = classItem.time_slot;
+      const day = classItem.day_of_week;
+
+      timeSlots.add(time);
+
+      if (!schedule[time]) {
+        schedule[time] = {};
+      }
+
+      if (!schedule[time][day]) {
+        schedule[time][day] = [];
+      }
+
+      schedule[time][day].push({
+        id: classItem.id, // Добавляем ID для редактирования
+        name: classItem.name,
+        level: classItem.level,
+        teacher: classItem.teacher,
+        type: classItem.type,
+        location: classItem.location,
+      });
+    });
+
+    // Сортируем слоты времени
+    const sortedTimeSlots = Array.from(timeSlots).sort((a, b) => {
+      const timeA = parseInt(a.split(":")[0]) * 60 + parseInt(a.split(":")[1]);
+      const timeB = parseInt(b.split(":")[0]) * 60 + parseInt(b.split(":")[1]);
+      return timeA - timeB;
+    });
+
+    console.log(`✅ Загружено ${classes.length} занятий из базы данных`);
+
+    return {
+      schedule,
+      timeSlots: sortedTimeSlots,
+      dayNames,
+      typeNames,
+      locationNames,
+    };
+  } catch (error) {
+    console.error("❌ Ошибка загрузки расписания из базы:", error);
+    throw error;
+  }
+}
+
+// Загрузка справочников для админ-панели
+async function loadReferenceData() {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const [classTypes, locations, teachers] = await Promise.all([
+      supabase.from("class_types").select("*").order("sort_order"),
+      supabase.from("locations").select("*").order("sort_order"),
+      supabase.from("teachers").select("*").order("sort_order"),
+    ]);
+
+    return {
+      classTypes: classTypes.data || [],
+      locations: locations.data || [],
+      teachers: teachers.data || [],
+    };
+  } catch (error) {
+    console.error("❌ Ошибка загрузки справочников:", error);
+    throw error;
+  }
+}
+
+// === ФУНКЦИИ УПРАВЛЕНИЯ ОБЩИМ РАСПИСАНИЕМ (ТОЛЬКО ДЛЯ АДМИНОВ) ===
+
+// Создание нового занятия в общем расписании
+async function createScheduleClass(classData) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("schedule_classes")
+      .insert({
+        name: classData.name,
+        level: classData.level,
+        teacher: classData.teacher,
+        type: classData.type,
+        location: classData.location,
+        day_of_week: classData.day_of_week,
+        time_slot: classData.time_slot,
+        created_by: currentUser.id,
+        updated_by: currentUser.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Занятие добавлено в общее расписание:", data.name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка создания занятия:", error);
+    throw error;
+  }
+}
+
+// Обновление занятия в общем расписании
+async function updateScheduleClass(classId, classData) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("schedule_classes")
+      .update({
+        name: classData.name,
+        level: classData.level,
+        teacher: classData.teacher,
+        type: classData.type,
+        location: classData.location,
+        day_of_week: classData.day_of_week,
+        time_slot: classData.time_slot,
+        updated_by: currentUser.id,
+      })
+      .eq("id", classId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Занятие обновлено:", data.name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка обновления занятия:", error);
+    throw error;
+  }
+}
+
+// Удаление занятия из общего расписания (мягкое удаление)
+async function deleteScheduleClass(classId) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("schedule_classes")
+      .update({
+        is_active: false,
+        updated_by: currentUser.id,
+      })
+      .eq("id", classId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Занятие удалено:", data.name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка удаления занятия:", error);
+    throw error;
+  }
+}
+
+// === ФУНКЦИИ ДОБАВЛЕНИЯ ИЗ ОБЩЕГО В ПЕРСОНАЛЬНОЕ РАСПИСАНИЕ ===
+
+// Добавление занятия из общего расписания в личные
+async function addClassToPersonal(scheduleClass, time, day) {
+  if (!currentUser) {
+    throw new Error("Пользователь не авторизован");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("user_personal_classes")
+      .insert({
+        user_id: currentUser.id,
+        name: scheduleClass.name,
+        level: scheduleClass.level,
+        teacher: scheduleClass.teacher,
+        location: scheduleClass.location,
+        day_of_week: day,
+        time_slot: time,
+        type: scheduleClass.type || "added_from_schedule",
+        // Дополнительное поле для связи с общим расписанием
+        source_schedule_class_id: scheduleClass.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Занятие добавлено в персональное расписание:", data.name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка добавления в персональное расписание:", error);
+    throw error;
+  }
+}
+
+// === ФУНКЦИИ УПРАВЛЕНИЯ СПРАВОЧНИКАМИ (ТОЛЬКО ДЛЯ АДМИНОВ) ===
+
+// Управление типами занятий
+async function createClassType(typeData) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("class_types")
+      .insert(typeData)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Тип занятия создан:", data.display_name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка создания типа занятия:", error);
+    throw error;
+  }
+}
+
+async function updateClassType(typeId, typeData) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("class_types")
+      .update(typeData)
+      .eq("id", typeId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Тип занятия обновлен:", data.display_name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка обновления типа занятия:", error);
+    throw error;
+  }
+}
+
+// Управление локациями
+async function createLocation(locationData) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("locations")
+      .insert(locationData)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Локация создана:", data.display_name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка создания локации:", error);
+    throw error;
+  }
+}
+
+async function updateLocation(locationId, locationData) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("locations")
+      .update(locationData)
+      .eq("id", locationId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Локация обновлена:", data.display_name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка обновления локации:", error);
+    throw error;
+  }
+}
+
+// Управление преподавателями
+async function createTeacher(teacherData) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("teachers")
+      .insert(teacherData)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Преподаватель создан:", data.full_name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка создания преподавателя:", error);
+    throw error;
+  }
+}
+
+async function updateTeacher(teacherId, teacherData) {
+  if (!isAdmin()) {
+    throw new Error("Доступ запрещен: требуются права администратора");
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("teachers")
+      .update(teacherData)
+      .eq("id", teacherId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log("✅ Преподаватель обновлен:", data.full_name);
+    return data;
+  } catch (error) {
+    console.error("❌ Ошибка обновления преподавателя:", error);
+    throw error;
+  }
+}
+
+// === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+
 // Проверка админских прав
 function isAdmin() {
   return userProfile && userProfile.is_admin === true;
 }
 
-// Экспортируем функции глобально для совместимости
+// === ЭКСПОРТ ВСЕХ ФУНКЦИЙ ===
+
+// Экспортируем базовые функции аутентификации
 window.signInWithGoogle = signInWithGoogle;
 window.logout = logout;
 window.currentUser = currentUser;
 window.userProfile = userProfile;
+window.isAdmin = isAdmin;
+
+// Экспортируем функции работы с пользовательскими данными
 window.getUserSavedGroups = getUserSavedGroups;
 window.saveUserGroups = saveUserGroups;
 window.getUserPersonalClasses = getUserPersonalClasses;
 window.createPersonalClass = createPersonalClass;
 window.updatePersonalClass = updatePersonalClass;
 window.deletePersonalClass = deletePersonalClass;
-window.isAdmin = isAdmin;
+
+// Экспортируем функции работы с общим расписанием
+window.loadScheduleFromDatabase = loadScheduleFromDatabase;
+window.loadReferenceData = loadReferenceData;
+window.createScheduleClass = createScheduleClass;
+window.updateScheduleClass = updateScheduleClass;
+window.deleteScheduleClass = deleteScheduleClass;
+window.addClassToPersonal = addClassToPersonal;
+
+// Экспортируем функции работы со справочниками
+window.createClassType = createClassType;
+window.updateClassType = updateClassType;
+window.createLocation = createLocation;
+window.updateLocation = updateLocation;
+window.createTeacher = createTeacher;
+window.updateTeacher = updateTeacher;
 
 // Экспортируем Supabase клиент для других модулей
 window.supabase = supabase;
