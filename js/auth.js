@@ -111,9 +111,7 @@ async function signInWithGoogle() {
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: "https://maxdance.netlify.app", // ← ИЗМЕНИТЬ ЭТО
-      },
+      // Убираем options полностью
     });
 
     if (error) {
