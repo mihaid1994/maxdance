@@ -104,15 +104,21 @@ function handleAuthSignOut() {
   }
 }
 
-// Вход через Google
+// Вход через Google (ИСПРАВЛЕННАЯ ВЕРСИЯ)
 async function signInWithGoogle() {
   console.log("🔑 Вход через Google...");
 
   try {
+    // Определяем правильный redirect URL в зависимости от окружения
+    const redirectURL =
+      window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : "https://maxdance.netlify.app";
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: redirectURL,
       },
     });
 
