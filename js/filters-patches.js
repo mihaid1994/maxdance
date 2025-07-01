@@ -155,3 +155,20 @@ function closeFilters() {
   document.getElementById("filters-sidebar").classList.remove("active");
 }
 window.closeFilters = closeFilters;
+
+// === 10) Инструкции для режима выбора "Моих групп" ===
+function showMyGroupsInstructions() {
+  // Здесь можно показать всплывающую инструкцию или текст
+  // например, добавить под заголовком:
+  const container = document.getElementById("myGroupsFilters");
+  if (!container) return;
+  let note = container.querySelector(".my-groups-instructions");
+  if (!note) {
+    note = document.createElement("div");
+    note.className = "my-groups-instructions";
+    note.textContent =
+      'Нажмите на занятия, чтобы добавить/убрать их из "Моих групп".';
+    container.appendChild(note);
+  }
+}
+window.showMyGroupsInstructions = showMyGroupsInstructions;
