@@ -29,13 +29,21 @@ async function initAuth() {
   supabase.auth.onAuthStateChange(async (event, session) => {
     console.log("🔄 Auth state changed:", event);
 
-    // INITIAL_SESSION и SIGNED_IN считаем входом
+    // При INITIAL_SESSION или SIGNED_IN восстанавливаем авторизованного пользователя
     if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && session) {
       await handleAuthSuccess(session.user);
     }
-    // Только на явный SIGNED_OUT — выход из аккаунта
+    // При SIGNED_OUT проверяем, не осталось ли ещё активной сессии
     else if (event === "SIGNED_OUT") {
-      handleAuthSignOut();
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      // Если сессии действительно нет — делаем выход
+      if (!currentSession) {
+        handleAuthSignOut();
+      } else {
+        console.log("ℹ️ IGNORE SIGNED_OUT — активная сессия всё ещё жива");
+      }
     }
   });
 
