@@ -863,3 +863,64 @@ async function initializeApp() {
 }
 
 document.addEventListener("DOMContentLoaded", initializeApp);
+
+// ================================
+// 1) Собираем teachers/levels/types/locations
+// ================================
+function extractAllData() {
+  const teachers = new Set(),
+    levels = new Set(),
+    types = new Set(),
+    locations = new Set();
+
+  for (const time of timeSlots || []) {
+    for (let d = 0; d < (dayNames || []).length; d++) {
+      const list = (scheduleData[time] && scheduleData[time][d]) || [];
+      list.forEach((c) => {
+        if (c.teacher) teachers.add(c.teacher);
+        if (c.level) levels.add(c.level);
+        if (c.type) types.add(c.type);
+        if (c.location) locations.add(c.location);
+      });
+    }
+  }
+
+  return {
+    teachers: Array.from(teachers).sort(),
+    levels: Array.from(levels).sort(),
+    types: Array.from(types).sort(),
+    locations: Array.from(locations).sort(),
+  };
+}
+window.extractAllData = extractAllData;
+
+// ================================
+// 2) toggleMyGroupsFilter — переключатель «Мои группы»
+// ================================
+function toggleMyGroupsFilter() {
+  activeFilters.showMyGroupsOnly = !activeFilters.showMyGroupsOnly;
+  // перерисовываем расписание
+  if (typeof reloadScheduleWithAuth === "function") {
+    reloadScheduleWithAuth();
+  } else {
+    renderFilteredSchedule();
+    updateStats();
+    updateFilterFab();
+  }
+}
+window.toggleMyGroupsFilter = toggleMyGroupsFilter;
+
+// ================================
+// 3) Открытие/закрытие off-canvas-фильтров
+// ================================
+function toggleFilters() {
+  document.getElementById("filters-overlay").classList.toggle("active");
+  document.getElementById("filters-sidebar").classList.toggle("active");
+}
+window.toggleFilters = toggleFilters;
+
+function closeFilters() {
+  document.getElementById("filters-overlay").classList.remove("active");
+  document.getElementById("filters-sidebar").classList.remove("active");
+}
+window.closeFilters = closeFilters;
