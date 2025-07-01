@@ -177,8 +177,9 @@ function getClassKey(classItem, time, day) {
   return `${classItem.name}_${classItem.level}_${classItem.teacher}_${classItem.location}_${time}_${day}`;
 }
 
-// Улучшенная функция создания элемента занятия с правильными ID
 function createClassItem(classData, time, day) {
+  console.log("🏗️ Создаем элемент занятия:", classData);
+
   const locationClass =
     classData.location === "8 марта" ? "loc-8marta" : "loc-libknehta";
   const locationText = classData.location === "8 марта" ? "8М" : "КЛ";
@@ -190,20 +191,18 @@ function createClassItem(classData, time, day) {
   let showStar = false;
 
   if (isSelectMode) {
-    // В режиме выбора показываем только те, что выбираем сейчас
     const isCurrentlySelected = tempSelectedGroups.has(classKey);
     if (isCurrentlySelected) {
       additionalClasses += " selected-group";
     }
   } else {
-    // В обычном режиме показываем мои сохраненные группы
     if (isMyGroup) {
       additionalClasses += " my-group";
       showStar = true;
     }
   }
 
-  // Добавляем кнопки для добавления в персональное расписание (только для авторизованных)
+  // Кнопки для авторизованных пользователей
   let actionButtons = "";
   if (currentUser && !isSelectMode) {
     const safeClassData = JSON.stringify(classData).replace(/"/g, "&quot;");
@@ -218,7 +217,7 @@ function createClassItem(classData, time, day) {
     `;
   }
 
-  // Добавляем кнопки админа (только для администраторов)
+  // Кнопки админа
   let adminButtons = "";
   if (isAdmin() && !isSelectMode && classData.id) {
     adminButtons = `
@@ -244,7 +243,7 @@ function createClassItem(classData, time, day) {
       )}, '${time}', ${day}, this)`
     : `showClassDetails('${classData.name}', '${classData.level}', '${classData.teacher}', '${classData.location}')`;
 
-  return `
+  const result = `
     <div class="class-item ${
       classData.type
     }${additionalClasses}" onclick="${clickHandler}">
@@ -257,7 +256,13 @@ function createClassItem(classData, time, day) {
       ${adminButtons}
     </div>
   `;
+
+  console.log("✅ HTML элемента создан");
+  return result;
 }
+
+// 4. Принудительно перерендерим расписание:
+renderFilteredSchedule();
 
 // === ФУНКЦИИ ДЛЯ РАБОТЫ С ПЕРСОНАЛЬНЫМ РАСПИСАНИЕМ ===
 
@@ -1905,6 +1910,11 @@ function renderDesktopSchedule() {
   const scheduleContainer = document.getElementById("schedule");
   scheduleContainer.innerHTML = "";
 
+  console.log("🖥️ Рендеринг десктопного расписания...");
+  console.log("Контейнер найден:", !!scheduleContainer);
+  console.log("Временных слотов:", timeSlots.length);
+  console.log("Данных расписания:", Object.keys(scheduleData).length);
+
   // Создаем таблицу
   const table = document.createElement("table");
   table.className = "schedule-table";
@@ -1927,7 +1937,10 @@ function renderDesktopSchedule() {
   // Создаем тело таблицы
   const tbody = document.createElement("tbody");
 
+  // Проверяем каждый временной слот
   timeSlots.forEach((time) => {
+    console.log(`⏰ Обрабатываем время ${time}:`, scheduleData[time]);
+
     const row = document.createElement("tr");
     row.className = "time-row";
 
@@ -1938,20 +1951,34 @@ function renderDesktopSchedule() {
     row.appendChild(timeCell);
 
     // Ячейки для каждого дня
-    for (let day = 0; day < daysCount; day++) {
+    for (let day = 0; day < 7; day++) {
       const dayCell = document.createElement("td");
       dayCell.className = "day-cell";
 
+      // Проверяем наличие занятий
       if (scheduleData[time] && scheduleData[time][day]) {
+        console.log(
+          `📅 ${dayNames[day]} ${time}: найдено ${scheduleData[time][day].length} занятий`
+        );
+
         const filteredClasses = scheduleData[time][day].filter((classItem) =>
           matchesFilters(classItem, time, day)
         );
 
+        console.log(`✅ После фильтрации: ${filteredClasses.length} занятий`);
+
         filteredClasses.forEach((classItem) => {
+          console.log(`🎯 Создаем элемент для:`, classItem);
           const classElement = document.createElement("div");
           classElement.innerHTML = createClassItem(classItem, time, day);
           dayCell.appendChild(classElement.firstChild);
         });
+      } else {
+        // Добавляем пустую ячейку
+        const emptyDiv = document.createElement("div");
+        emptyDiv.className = "empty-cell";
+        emptyDiv.textContent = "—";
+        dayCell.appendChild(emptyDiv);
       }
 
       row.appendChild(dayCell);
@@ -1962,8 +1989,9 @@ function renderDesktopSchedule() {
 
   table.appendChild(tbody);
   scheduleContainer.appendChild(table);
-}
 
+  console.log("✅ Таблица создана и добавлена в DOM");
+}
 // Отрисовка расписания для мобильных устройств
 function renderMobileSchedule() {
   const scheduleContainer = document.getElementById("schedule");
