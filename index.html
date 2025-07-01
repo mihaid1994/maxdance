@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Расписание MaxDance</title>
     <link rel="stylesheet" href="./css/face.css" />
+    <!-- Подключаем auth.js как модуль -->
+    <script type="module" src="./js/auth.js"></script>
   </head>
   <body>
     <div class="container">
@@ -17,6 +19,33 @@
               <p>Школа танцев</p>
             </div>
           </div>
+
+          <!-- Секция аутентификации -->
+          <div class="auth-section" id="auth-section">
+            <!-- Кнопка входа -->
+            <div id="login-section">
+              <button class="auth-button" onclick="signInWithGoogle()">
+                🔑 Войти через Google
+              </button>
+            </div>
+
+            <!-- Информация о пользователе -->
+            <div id="user-section" style="display: none">
+              <div class="user-info">
+                <img
+                  id="user-avatar"
+                  class="user-avatar"
+                  alt="Avatar"
+                  style="display: none"
+                />
+                <span id="user-name"></span>
+                <button class="auth-button logout" onclick="logout()">
+                  Выйти
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="locations">
             <div class="location">
               📍 ул. 8 Марта, 8Д (ТЦ Мытный Двор, 2 этаж)
@@ -72,7 +101,7 @@
                   class="my-groups-save-btn"
                   id="my-groups-save-btn"
                   onclick="event.stopPropagation(); saveMyGroupsData();"
-                  title="Скачать обновленный JSON"
+                  title="Сохранить в аккаунт"
                   style="display: none"
                 >
                   💾
@@ -187,6 +216,7 @@
       </div>
     </div>
 
+    <!-- Подключаем basefucs.js как обычный скрипт -->
     <script src="./js/basefucs.js"></script>
   </body>
 </html>

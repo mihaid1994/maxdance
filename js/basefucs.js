@@ -1,4 +1,4 @@
-// Глобальные переменные
+// === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
 let scheduleData = {};
 let timeSlots = [];
 let dayNames = [];
@@ -70,30 +70,70 @@ let tempSelectedGroups = new Set(); // Временно выбранные гр�
 let openFilterGroups = new Set(); // Отслеживание открытых групп фильтров
 let collapsedMobileDays = new Set(); // Отслеживание свернутых дней в мобильной версии
 
-// Загрузка данных
+// === ЗАГРУЗКА ДАННЫХ ===
+
+// Загрузка данных с учетом авторизации
 async function loadData() {
   try {
+    console.log("📡 Загрузка данных расписания...");
+
+    // Читаем базовое расписание из JSON
     const response = await fetch("./data/data.json");
     const data = await response.json();
+
+    // Обновляем глобальные переменные
     scheduleData = data.schedule;
     timeSlots = data.timeSlots;
     dayNames = data.dayNames;
     typeNames = data.typeNames;
     locationNames = data.locationNames;
 
-    // Загружаем сохраненные группы пользователя, если они есть
-    if (data.myGroups) {
-      myGroups = new Set(data.myGroups);
-      // По умолчанию показываем только мои группы
-      activeFilters.showMyGroupsOnly = true;
+    // Если пользователь авторизован, загружаем его группы
+    if (currentUser) {
+      console.log("👤 Загрузка персональных данных...");
+      try {
+        const userGroups = await getUserSavedGroups();
+        myGroups = new Set(userGroups);
+        console.log(`✅ Загружено ${myGroups.size} групп пользователя`);
+      } catch (error) {
+        console.error("⚠️ Ошибка загрузки групп пользователя:", error);
+        // Продолжаем с пустым набором групп
+        myGroups = new Set();
+      }
+    } else {
+      // Для неавторизованных пользователей используем группы из JSON (если есть)
+      if (data.myGroups) {
+        myGroups = new Set(data.myGroups);
+        activeFilters.showMyGroupsOnly = true;
+      } else {
+        myGroups = new Set();
+      }
+      console.log("📂 Загружены локальные группы:", myGroups.size);
     }
+
+    return data;
   } catch (error) {
-    console.error("Ошибка загрузки данных:", error);
-    // Fallback данные в случае ошибки
+    console.error("❌ Ошибка загрузки данных:", error);
+    // Создаем пустые данные в случае ошибки
     scheduleData = {};
     timeSlots = [];
+    dayNames = [];
+    typeNames = {};
+    locationNames = {};
+    myGroups = new Set();
   }
 }
+
+// Перезагрузка расписания с авторизацией
+async function reloadScheduleWithAuth() {
+  await loadData();
+  createMyGroupsControls();
+  renderFilteredSchedule();
+  updateStats();
+  updateFilterFab();
+}
+
+// === ОСНОВНЫЕ ФУНКЦИИ (БЕЗ ИЗМЕНЕНИЙ) ===
 
 // Генерация уникального ключа для занятия
 function getClassKey(classItem, time, day) {
@@ -199,7 +239,7 @@ function toggleMyGroupsEditMode() {
   renderFilteredSchedule();
 }
 
-// Сохранение данных моих групп
+// Сохранение данных моих групп (ОБНОВЛЕНО для Supabase)
 async function saveMyGroupsData() {
   if (!isSelectMode) return;
 
@@ -212,22 +252,50 @@ async function saveMyGroupsData() {
     // Обновляем сохраненные группы ТОЛЬКО теми, что выбрали в режиме
     myGroups = new Set(tempSelectedGroups);
 
-    // Загружаем текущий JSON
-    const response = await fetch("./data/data.json");
-    const data = await response.json();
-    data.myGroups = Array.from(myGroups);
+    let saveSuccess = false;
 
-    // Создаем и скачиваем обновленный файл
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "data.json";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    if (currentUser) {
+      // Сохраняем через Supabase
+      try {
+        await saveUserGroups(Array.from(myGroups));
+        saveSuccess = true;
+        alert(
+          `✅ Группы сохранены в вашем аккаунте! Выбрано групп: ${myGroups.size}`
+        );
+      } catch (error) {
+        console.error("❌ Ошибка сохранения через Supabase:", error);
+        alert("⚠️ Ошибка сохранения в аккаунте: " + error.message);
+        return;
+      }
+    } else {
+      // Fallback: сохраняем в JSON как раньше
+      try {
+        const response = await fetch("./data/data.json");
+        const data = await response.json();
+        data.myGroups = Array.from(myGroups);
+
+        // Создаем и скачиваем обновленный файл
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "data.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        alert(
+          `✅ Группы сохранены! Выбрано групп: ${myGroups.size}\nФайл data.json скачан. Замените его в папке data/ вашего приложения.`
+        );
+        saveSuccess = true;
+      } catch (error) {
+        console.error("❌ Ошибка локального сохранения:", error);
+        alert("❌ Ошибка при сохранении групп: " + error.message);
+        return;
+      }
+    }
 
     console.log("✅ Новые группы сохранены:", Array.from(myGroups));
 
@@ -239,10 +307,6 @@ async function saveMyGroupsData() {
     renderFilteredSchedule();
     updateStats();
     updateFilterFab();
-
-    alert(
-      `✅ Группы сохранены! Выбрано групп: ${myGroups.size}\nФайл data.json скачан. Замените его в папке data/ вашего приложения.`
-    );
   } catch (error) {
     console.error("❌ Ошибка сохранения:", error);
     alert("❌ Ошибка при сохранении групп: " + error.message);
@@ -321,7 +385,14 @@ function createMyGroupsControls() {
   const toggleButton = document.createElement("button");
   toggleButton.id = "my-groups-toggle";
   toggleButton.className = "filter-button my-groups-main-toggle";
-  toggleButton.textContent = `⭐ Показать только мои группы (${myGroups.size})`;
+
+  // Обновляем текст кнопки в зависимости от авторизации
+  const groupsText =
+    currentUser && userProfile
+      ? `⭐ Мои группы (${myGroups.size})`
+      : `⭐ Показать только мои группы (${myGroups.size})`;
+  toggleButton.textContent = groupsText;
+
   if (activeFilters.showMyGroupsOnly) {
     toggleButton.classList.add("active");
   }
@@ -333,8 +404,9 @@ function createMyGroupsControls() {
   if (myGroups.size === 0) {
     const message = document.createElement("div");
     message.className = "no-groups-message";
-    message.textContent =
-      "Группы не выбраны. Используйте кнопку редактирования для добавления.";
+    message.textContent = currentUser
+      ? "Группы не выбраны. Используйте кнопку редактирования для добавления."
+      : "Группы не выбраны. Войдите в аккаунт или используйте кнопку редактирования.";
     container.appendChild(message);
   }
 
@@ -780,9 +852,17 @@ function updateStats() {
   activeFiltersCount += activeFilters.types.size;
   activeFiltersCount += activeFilters.locations.size;
 
+  // Добавляем информацию о пользователе, если авторизован
+  const userInfo =
+    currentUser && userProfile
+      ? ` | <span style="color: #27ae60;">👤 ${
+          userProfile.full_name || currentUser.email
+        }</span>`
+      : "";
+
   document.getElementById("stats").innerHTML = `
         <span style="color: #f39c12;">📊 Показано занятий:</span> <strong>${totalClasses}</strong> | 
-        <span style="color: #f39c12;">🎯 Активных фильтров:</span> <strong>${activeFiltersCount}</strong>
+        <span style="color: #f39c12;">🎯 Активных фильтров:</span> <strong>${activeFiltersCount}</strong>${userInfo}
     `;
 }
 
@@ -833,10 +913,13 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
+// === ИНИЦИАЛИЗАЦИЯ (ОБНОВЛЕНО) ===
+
 // Инициализация приложения
 async function initializeApp() {
   console.log("🚀 Инициализация приложения...");
 
+  // Загружаем данные
   await loadData();
 
   const { teachers, levels, types, locations } = extractAllData();
@@ -928,7 +1011,16 @@ async function initializeApp() {
     renderFilteredSchedule();
   });
 
-  console.log("✅ Инициализация завершена! Групп загружено:", myGroups.size);
+  console.log("✅ Инициализация завершена!");
+  if (currentUser) {
+    console.log(
+      `👤 Пользователь: ${
+        userProfile?.full_name || currentUser.email
+      }, групп: ${myGroups.size}`
+    );
+  } else {
+    console.log(`📂 Групп загружено: ${myGroups.size}`);
+  }
 }
 
 // Запуск приложения при загрузке DOM
