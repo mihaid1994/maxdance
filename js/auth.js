@@ -536,6 +536,9 @@ async function loadScheduleWithPersonalClasses() {
 
 // Функция для перезагрузки расписания после авторизации
 async function reloadScheduleWithAuth() {
+  // Синхронизируем локальные переменные при каждом перезагрузке
+  currentUser = window.currentUser;
+  userProfile = window.userProfile;
   if (typeof window.loadData === "function") {
     await window.loadData();
     if (typeof window.renderFilteredSchedule === "function") {

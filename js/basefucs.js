@@ -1249,12 +1249,15 @@ function createFilterButtons(container, items, filterType) {
 async function initializeApp() {
   console.log("🚀 Инициализация MaxDance v2.0...");
 
-  // Ждем инициализации аутентификации
+  // Ждём, пока auth.js выставит window.currentUser
   let attempts = 0;
-  while (typeof currentUser === "undefined" && attempts < 50) {
+  while (typeof window.currentUser === "undefined" && attempts < 50) {
     await new Promise((resolve) => setTimeout(resolve, 100));
     attempts++;
   }
+  // Синхронизируем локальные переменные
+  currentUser = window.currentUser;
+  userProfile = window.userProfile;
 
   await loadData();
 
