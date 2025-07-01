@@ -80,6 +80,8 @@ let isAdminPanelOpen = false;
 // === ЗАГРУЗКА ДАННЫХ ===
 
 async function loadData() {
+  currentUser = window.currentUser;
+  userProfile = window.userProfile;
   try {
     console.log("📡 Загрузка данных расписания...");
 
