@@ -954,35 +954,49 @@ async function showAdminPanel() {
 // Загрузка данных для админ-панели
 async function loadAdminPanelData() {
   try {
-    // Загружаем расписание
+    // Упрощенный запрос без JOIN к user_profiles
     const { data: scheduleClasses, error: scheduleError } = await supabase
       .from("schedule_classes")
-      .select(
-        `
-        *,
-        created_by_profile:user_profiles!schedule_classes_created_by_fkey(full_name),
-        updated_by_profile:user_profiles!schedule_classes_updated_by_fkey(full_name)
-      `
-      )
+      .select("*")
       .order("day_of_week", { ascending: true })
       .order("time_slot", { ascending: true });
 
     if (scheduleError) throw scheduleError;
 
-    // Загружаем справочники
-    const referenceData = await loadReferenceData();
+    // Загружаем справочники упрощенно
+    const { data: classTypes, error: typesError } = await supabase
+      .from("class_types")
+      .select("*")
+      .order("sort_order", { ascending: true });
 
+    const { data: locations, error: locationsError } = await supabase
+      .from("locations")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    const { data: teachers, error: teachersError } = await supabase
+      .from("teachers")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    // Игнорируем ошибки справочников если таблиц нет
     adminPanelData = {
       scheduleClasses: scheduleClasses || [],
-      classTypes: referenceData.classTypes || [],
-      locations: referenceData.locations || [],
-      teachers: referenceData.teachers || [],
+      classTypes: classTypes || [],
+      locations: locations || [],
+      teachers: teachers || [],
     };
 
-    console.log("✅ Данные админ-панели загружены");
+    console.log("✅ Данные админ-панели загружены", adminPanelData);
   } catch (error) {
     console.error("❌ Ошибка загрузки данных админ-панели:", error);
-    throw error;
+    // Создаем пустые данные вместо падения
+    adminPanelData = {
+      scheduleClasses: [],
+      classTypes: [],
+      locations: [],
+      teachers: [],
+    };
   }
 }
 
@@ -2739,6 +2753,7 @@ window.getTypeColor = getTypeColor;
 window.getTypeIcon = getTypeIcon;
 window.debounce = debounce;
 window.debouncedRender = debouncedRender;
+window.debugScheduleData = debugScheduleData;
 
 // === ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ===
 

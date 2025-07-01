@@ -368,40 +368,64 @@ async function deletePersonalClass(classId) {
 // Загрузка общего расписания из базы данных
 async function loadScheduleFromDatabase() {
   try {
-    console.log("📡 Загрузка расписания из базы данных...");
+    console.log("🔄 Загрузка расписания из базы данных...");
 
-    // Загружаем активные занятия
-    const { data: classes, error: classesError } = await supabase
+    // Загружаем все занятия
+    const { data: classes, error } = await supabase
       .from("schedule_classes")
       .select("*")
       .eq("is_active", true)
-      .order("day_of_week", { ascending: true })
-      .order("time_slot", { ascending: true });
+      .order("day_of_week")
+      .order("time_slot");
 
-    if (classesError) {
-      throw classesError;
-    }
+    if (error) throw error;
 
-    // Загружаем справочники
-    const { data: classTypes, error: typesError } = await supabase
-      .from("class_types")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
+    console.log("📊 Получено занятий из базы:", classes?.length || 0);
+    console.log("📝 Первое занятие:", classes?.[0]);
 
-    const { data: locations, error: locationsError } = await supabase
-      .from("locations")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
-
-    if (typesError || locationsError) {
-      throw typesError || locationsError;
-    }
-
-    // Преобразуем данные в формат, совместимый с существующим кодом
+    // Создаем структуру данных как ожидает basefucs.js
     const schedule = {};
-    const timeSlots = new Set();
+    const timeSlotsSet = new Set();
+    const typeNamesMap = {};
+    const locationNamesMap = {};
+
+    classes?.forEach((classItem) => {
+      const time = classItem.time_slot;
+      const day = classItem.day_of_week;
+
+      timeSlotsSet.add(time);
+
+      if (!schedule[time]) {
+        schedule[time] = {};
+      }
+      if (!schedule[time][day]) {
+        schedule[time][day] = [];
+      }
+
+      // Преобразуем данные из базы в формат как в JSON
+      const scheduleClass = {
+        id: classItem.id,
+        name: classItem.name,
+        level: classItem.level,
+        teacher: classItem.teacher,
+        type: classItem.type,
+        location: classItem.location,
+      };
+
+      schedule[time][day].push(scheduleClass);
+
+      // Собираем типы и локации для справочников
+      typeNamesMap[classItem.type] = classItem.type;
+      locationNamesMap[classItem.location] = classItem.location;
+    });
+
+    // Сортируем временные слоты
+    const timeSlots = Array.from(timeSlotsSet).sort((a, b) => {
+      const timeA = parseInt(a.split(":")[0]) * 60 + parseInt(a.split(":")[1]);
+      const timeB = parseInt(b.split(":")[0]) * 60 + parseInt(b.split(":")[1]);
+      return timeA - timeB;
+    });
+
     const dayNames = [
       "Понедельник",
       "Вторник",
@@ -412,63 +436,70 @@ async function loadScheduleFromDatabase() {
       "Воскресенье",
     ];
 
-    // Создаем объект типов
-    const typeNames = {};
-    classTypes.forEach((type) => {
-      typeNames[type.id] = type.display_name;
-    });
-
-    // Создаем объект локаций
-    const locationNames = {};
-    locations.forEach((location) => {
-      locationNames[location.id] = location.display_name;
-    });
-
-    // Группируем занятия по времени и дням
-    classes.forEach((classItem) => {
-      const time = classItem.time_slot;
-      const day = classItem.day_of_week;
-
-      timeSlots.add(time);
-
-      if (!schedule[time]) {
-        schedule[time] = {};
-      }
-
-      if (!schedule[time][day]) {
-        schedule[time][day] = [];
-      }
-
-      schedule[time][day].push({
-        id: classItem.id, // Добавляем ID для редактирования
-        name: classItem.name,
-        level: classItem.level,
-        teacher: classItem.teacher,
-        type: classItem.type,
-        location: classItem.location,
-      });
-    });
-
-    // Сортируем слоты времени
-    const sortedTimeSlots = Array.from(timeSlots).sort((a, b) => {
-      const timeA = parseInt(a.split(":")[0]) * 60 + parseInt(a.split(":")[1]);
-      const timeB = parseInt(b.split(":")[0]) * 60 + parseInt(b.split(":")[1]);
-      return timeA - timeB;
-    });
-
-    console.log(`✅ Загружено ${classes.length} занятий из базы данных`);
-
-    return {
+    const result = {
       schedule,
-      timeSlots: sortedTimeSlots,
+      timeSlots,
       dayNames,
-      typeNames,
-      locationNames,
+      typeNames: typeNamesMap,
+      locationNames: {
+        "8 марта": "ул. 8 Марта (Мытный Двор)",
+        либкнехта: "ул. К.Либкнехта (Консул)",
+        ...locationNamesMap,
+      },
     };
+
+    console.log("✅ Структура расписания создана:");
+    console.log("- Временных слотов:", timeSlots.length);
+    console.log("- Дней:", dayNames.length);
+    console.log("- Типов занятий:", Object.keys(typeNamesMap).length);
+    console.log("📋 Пример структуры:", {
+      firstTimeSlot: timeSlots[0],
+      firstDayClasses: schedule[timeSlots[0]]?.[0] || "нет занятий",
+    });
+
+    return result;
   } catch (error) {
-    console.error("❌ Ошибка загрузки расписания из базы:", error);
+    console.error("❌ Ошибка загрузки из базы данных:", error);
     throw error;
   }
+}
+
+// === ДОПОЛНИТЕЛЬНАЯ ОТЛАДОЧНАЯ ФУНКЦИЯ ===
+// Добавьте эту функцию в basefucs.js для отладки:
+
+function debugScheduleData() {
+  console.log("🔍 ОТЛАДКА РАСПИСАНИЯ:");
+  console.log("scheduleData:", scheduleData);
+  console.log("timeSlots:", timeSlots);
+  console.log("dayNames:", dayNames);
+
+  // Проверяем первый день и время
+  if (timeSlots.length > 0 && Object.keys(scheduleData).length > 0) {
+    const firstTime = timeSlots[0];
+    const firstDay = 0;
+    console.log(
+      `Занятия в ${dayNames[firstDay]} в ${firstTime}:`,
+      scheduleData[firstTime]?.[firstDay]
+    );
+
+    // Проверяем фильтры
+    if (scheduleData[firstTime]?.[firstDay]?.[0]) {
+      const testClass = scheduleData[firstTime][firstDay][0];
+      console.log("Тестовое занятие:", testClass);
+      console.log(
+        "Проходит фильтры:",
+        matchesFilters(testClass, firstTime, firstDay)
+      );
+    }
+  }
+
+  // Проверяем элемент расписания
+  const scheduleElement = document.getElementById("schedule");
+  console.log("Элемент расписания найден:", !!scheduleElement);
+  console.log(
+    "Содержимое элемента:",
+    scheduleElement?.innerHTML?.substring(0, 200) + "..."
+  );
 }
 
 // Загрузка справочников для админ-панели
