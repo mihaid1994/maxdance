@@ -111,7 +111,9 @@ async function signInWithGoogle() {
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      // Убираем options полностью
+      options: {
+        redirectTo: window.location.origin,
+      },
     });
 
     if (error) {
