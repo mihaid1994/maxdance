@@ -1246,116 +1246,89 @@ function createFilterButtons(container, items, filterType) {
   });
 }
 
+// === Инициализация приложения ===
 async function initializeApp() {
   console.log("🚀 Инициализация MaxDance v2.0...");
 
-  // Ждём, пока auth.js выставит window.currentUser
-  let attempts = 0;
-  while (typeof window.currentUser === "undefined" && attempts < 50) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    attempts++;
-  }
-  // Синхронизируем локальные переменные
-  currentUser = window.currentUser;
-  userProfile = window.userProfile;
-
+  // Просто грузим расписание (гость или юзер — разберётся в loadData/reloadScheduleWithAuth)
   await loadData();
 
   const { teachers, levels, types, locations } = extractAllData();
 
-  // Создание фильтров преподавателей
+  // Построение фильтров (без всяких ожиданий auth)
   createFilterButtons(
     document.getElementById("teacherFilters"),
     teachers,
     "teachers"
   );
 
-  // Создание фильтров уровней с фиксированным порядком
+  // Уровни в фиксированном порядке
   const levelContainer = document.getElementById("levelFilters");
   levelContainer.innerHTML = "";
-  const fixedOrder = [
-    "Набор",
-    "Начинающие",
-    "Продолжающие",
-    "Продвинутые",
-    "Дети",
-  ];
-
-  fixedOrder.forEach((level) => {
-    if (levels.has(level)) {
-      const button = document.createElement("button");
-      button.className = "filter-button";
-      button.textContent = level;
-      button.onclick = () => toggleFilter("levels", level, button);
-      levelContainer.appendChild(button);
-    }
-  });
-
-  // Создание фильтров типов (с исключениями)
-  const typeButtons = document.getElementById("typeFilters");
-  typeButtons.innerHTML = "";
-  const filteredTypes = [...types].filter(
-    (type) => !excludedTypes.includes(type)
-  );
-
-  filteredTypes.sort().forEach((type) => {
-    const button = document.createElement("button");
-    button.className = "filter-button";
-    button.textContent = typeNames[type] || type;
-    button.onclick = () => toggleFilter("types", type, button);
-    typeButtons.appendChild(button);
-  });
-
-  // Создание фильтров локаций
-  const locationButtons = document.getElementById("locationFilters");
-  locationButtons.innerHTML = "";
-  [...locations].sort().forEach((location) => {
-    const button = document.createElement("button");
-    button.className = "filter-button";
-    button.textContent = locationNames[location] || location;
-    button.onclick = () => toggleFilter("locations", location, button);
-    locationButtons.appendChild(button);
-  });
-
-  // Создание фильтра "Мои группы"
-  createMyGroupsControls();
-
-  // Все секции фильтров свернуты по умолчанию, кроме "Мои группы"
-  ["teacherFilters", "levelFilters", "typeFilters", "locationFilters"].forEach(
-    (groupId) => {
-      const options = document.getElementById(groupId);
-      const toggle = document.querySelector(
-        `[onclick="toggleFilterGroup('${groupId}')"] .filter-toggle`
-      );
-      if (options && toggle) {
-        options.classList.add("collapsed");
-        toggle.classList.add("collapsed");
+  ["Набор", "Начинающие", "Продолжающие", "Продвинутые", "Дети"].forEach(
+    (lvl) => {
+      if (levels.has(lvl)) {
+        const btn = document.createElement("button");
+        btn.className = "filter-button";
+        btn.textContent = lvl;
+        btn.onclick = () => toggleFilter("levels", lvl, btn);
+        levelContainer.appendChild(btn);
       }
     }
   );
 
+  // Типы занятий (с фильтром исключений)
+  const typeButtons = document.getElementById("typeFilters");
+  typeButtons.innerHTML = "";
+  [...types]
+    .filter((t) => !excludedTypes.includes(t))
+    .sort()
+    .forEach((type) => {
+      const btn = document.createElement("button");
+      btn.className = "filter-button";
+      btn.textContent = typeNames[type] || type;
+      btn.onclick = () => toggleFilter("types", type, btn);
+      typeButtons.appendChild(btn);
+    });
+
+  // Локации
+  const locationButtons = document.getElementById("locationFilters");
+  locationButtons.innerHTML = "";
+  [...locations].sort().forEach((loc) => {
+    const btn = document.createElement("button");
+    btn.className = "filter-button";
+    btn.textContent = locationNames[loc] || loc;
+    btn.onclick = () => toggleFilter("locations", loc, btn);
+    locationButtons.appendChild(btn);
+  });
+
+  // Кнопки «Мои группы»
+  createMyGroupsControls();
+
+  // Свернём все группы фильтров, кроме «Мои группы»
+  ["teacherFilters", "levelFilters", "typeFilters", "locationFilters"].forEach(
+    (id) => {
+      const opts = document.getElementById(id);
+      const tog = document.querySelector(
+        `[onclick="toggleFilterGroup('${id}')"] .filter-toggle`
+      );
+      if (opts && tog) {
+        opts.classList.add("collapsed");
+        tog.classList.add("collapsed");
+      }
+    }
+  );
   openFilterGroups.add("myGroupsFilters");
 
-  // Первоначальная отрисовка
+  // Финальный рендер расписания и статистики
   renderFilteredSchedule();
   updateStats();
   updateFilterFab();
 
-  // Обработчик изменения размера окна
+  // Перерисовка на ресайз
   window.addEventListener("resize", renderFilteredSchedule);
 
   console.log("✅ Инициализация завершена!");
-
-  if (currentUser) {
-    const status = isAdmin() ? "Администратор" : "Пользователь";
-    console.log(
-      `👤 ${status}: ${userProfile?.full_name || currentUser.email}, групп: ${
-        myGroups.size
-      }`
-    );
-  } else {
-    console.log(`📂 Гостевой режим, групп загружено: ${myGroups.size}`);
-  }
 }
 
 // === СОБЫТИЯ ===

@@ -13,44 +13,42 @@ let userProfile = null;
 
 // === БАЗОВАЯ АУТЕНТИФИКАЦИЯ ===
 
-// Инициализация аутентификации
+// === Инициализация аутентификации ===
 async function initAuth() {
   console.log("🔐 Инициализация аутентификации...");
 
-  // Проверяем текущую сессию
+  // Проверяем текущую сессию один раз при загрузке
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
   if (session) {
     await handleAuthSuccess(session.user);
   }
 
-  // Слушаем изменения авторизации
+  // Слушаем изменения состояния (вход/выход)
   supabase.auth.onAuthStateChange(async (event, session) => {
     console.log("🔄 Auth state changed:", event);
 
-    // INITIAL_SESSION — начальная загрузка текущей сессии, её не сбрасываем
-    if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
+    // INITIAL_SESSION и SIGNED_IN считаем входом
+    if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && session) {
       await handleAuthSuccess(session.user);
     }
-    // только на явный выход переходим в гостевой режим
+    // Только на явный SIGNED_OUT — выход из аккаунта
     else if (event === "SIGNED_OUT") {
       handleAuthSignOut();
     }
-    // все прочие события — игнорируем, не дергаем handleAuthSignOut
   });
 
   updateAuthUI();
 }
 
-// Обработка успешной авторизации
+// === Обработка успешного входа ===
 async function handleAuthSuccess(user) {
   console.log("✅ Пользователь авторизован:", user.email);
 
   currentUser = user;
 
-  // Получаем или создаем профиль пользователя
+  // Получаем или создаём профиль
   try {
     let { data: profile, error } = await supabase
       .from("user_profiles")
@@ -59,52 +57,54 @@ async function handleAuthSuccess(user) {
       .single();
 
     if (error && error.code === "PGRST116") {
-      // Профиль не найден, создаем
       const { data: newProfile, error: insertError } = await supabase
         .from("user_profiles")
         .insert({
           id: user.id,
           email: user.email,
-          full_name:
-            user.user_metadata.full_name ||
-            user.user_metadata.name ||
-            user.email,
+          full_name: user.user_metadata.full_name || user.email,
           avatar_url: user.user_metadata.avatar_url,
         })
         .select()
         .single();
-
-      if (insertError) {
-        console.error("❌ Ошибка создания профиля:", insertError);
-      } else {
-        profile = newProfile;
-        console.log("✅ Профиль создан");
-      }
+      if (insertError) throw insertError;
+      profile = newProfile;
     } else if (error) {
-      console.error("❌ Ошибка получения профиля:", error);
+      throw error;
     }
 
     userProfile = profile;
-  } catch (error) {
-    console.error("❌ Ошибка обработки профиля:", error);
+  } catch (err) {
+    console.error("❌ Ошибка получения/создания профиля:", err);
+    userProfile = { id: user.id, email: user.email, full_name: user.email };
   }
+
+  // Пробросим в глобал для basefucs.js
+  window.currentUser = currentUser;
+  window.userProfile = userProfile;
 
   updateAuthUI();
 
-  // Перезагружаем данные приложения
+  // Перезагрузим расписание уже как авторизованный
   if (typeof reloadScheduleWithAuth === "function") {
     await reloadScheduleWithAuth();
   }
 }
 
-// Обработка выхода
+// === Обработка выхода из аккаунта ===
 function handleAuthSignOut() {
   console.log("🚪 Пользователь вышел");
+
   currentUser = null;
   userProfile = null;
+
+  // Пробросим сброс в глобал
+  window.currentUser = null;
+  window.userProfile = null;
+
   updateAuthUI();
 
-  // Перезагружаем данные без авторизации
+  // Перезагрузим расписание уже как гость
   if (typeof reloadScheduleWithAuth === "function") {
     reloadScheduleWithAuth();
   }
@@ -538,25 +538,19 @@ async function loadScheduleWithPersonalClasses() {
   }
 }
 
-// Функция для перезагрузки расписания после авторизации
+// === Перезагрузка расписания после входа/выхода ===
 async function reloadScheduleWithAuth() {
-  // Синхронизируем локальные переменные при каждом перезагрузке
+  // Забираем актуальные window.currentUser / window.userProfile
   currentUser = window.currentUser;
   userProfile = window.userProfile;
-  if (typeof window.loadData === "function") {
-    await window.loadData();
-    if (typeof window.renderFilteredSchedule === "function") {
-      window.renderFilteredSchedule();
-    }
-    if (typeof window.updateStats === "function") {
-      window.updateStats();
-    }
-    if (typeof window.updateFilterFab === "function") {
-      window.updateFilterFab();
-    }
-    if (typeof window.createMyGroupsControls === "function") {
-      window.createMyGroupsControls();
-    }
+
+  // И заново грузим данные и UI
+  if (typeof loadData === "function") {
+    await loadData();
+    renderFilteredSchedule();
+    updateStats();
+    updateFilterFab();
+    createMyGroupsControls();
   }
 }
 
