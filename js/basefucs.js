@@ -8,10 +8,8 @@ let typeNames = {};
 let locationNames = {};
 const daysCount = 7;
 
-// Используем переменные из window (из auth.js модуля)
-let currentUser = () => window.currentUser;
-let userProfile = () => window.userProfile;
-let supabase = () => window.supabase;
+// Переменные для аутентификации определены в auth.js и доступны через window
+// Используем window.currentUser, window.userProfile, window.supabase напрямую
 
 // Массив исключений для типов занятий
 const excludedTypes = [
@@ -115,21 +113,20 @@ async function loadData() {
     locationNames = data.locationNames;
 
     // Загружаем группы пользователя
-    if (currentUser && typeof getUserSavedGroups === "function") {
+    if (window.currentUser && typeof getUserSavedGroups === "function") {
       try {
         const userGroups = await getUserSavedGroups();
         myGroups = new Set(userGroups);
         console.log(`✅ Загружено ${myGroups.size} групп пользователя`);
 
-        // ДОБАВИТЬ СЮДА:
         // Автоматически добавляем персональные занятия в мои группы
-        if (scheduleData && window.currentUser()) {
+        if (scheduleData && window.currentUser) {
           Object.keys(scheduleData).forEach((time) => {
             Object.keys(scheduleData[time]).forEach((day) => {
               scheduleData[time][day].forEach((classItem) => {
                 if (
                   classItem.isPersonal &&
-                  classItem.userId === window.currentUser().id
+                  classItem.userId === window.currentUser.id
                 ) {
                   const personalKey = `personal_${classItem.personalId}`;
                   myGroups.add(personalKey);
@@ -146,10 +143,12 @@ async function loadData() {
       } catch (error) {
         console.error("⚠️ Ошибка загрузки групп:", error);
         myGroups = new Set();
+        window.myGroups = myGroups;
       }
     } else if (data.myGroups) {
       myGroups = new Set(data.myGroups);
       activeFilters.showMyGroupsOnly = true;
+      window.myGroups = myGroups;
     }
 
     return data;
@@ -161,6 +160,7 @@ async function loadData() {
     typeNames = {};
     locationNames = {};
     myGroups = new Set();
+    window.myGroups = myGroups;
   }
 }
 
@@ -177,7 +177,11 @@ function getClassKey(classItem, time, day) {
 }
 
 function isAdmin() {
-  return currentUser && userProfile && userProfile.is_admin === true;
+  return (
+    window.currentUser &&
+    window.userProfile &&
+    window.userProfile.is_admin === true
+  );
 }
 
 function extractAllData() {
@@ -190,7 +194,10 @@ function extractAllData() {
     Object.values(timeData).forEach((dayClasses) => {
       dayClasses.forEach((classItem) => {
         // Показываем персональные занятия только их создателю
-        if (classItem.isPersonal && classItem.userId !== currentUser?.id) {
+        if (
+          classItem.isPersonal &&
+          classItem.userId !== window.currentUser?.id
+        ) {
           return;
         }
 
@@ -214,7 +221,7 @@ function extractAllData() {
 
 function matchesFilters(classItem, time, day) {
   // Персональные занятия видны только их создателю
-  if (classItem.isPersonal && classItem.userId !== currentUser?.id) {
+  if (classItem.isPersonal && classItem.userId !== window.currentUser?.id) {
     return false;
   }
 
@@ -282,8 +289,8 @@ function createClassItem(classData, time, day) {
 
   // Кнопки для авторизованных пользователей
   let actionButtons = "";
-  if (currentUser && !isSelectMode) {
-    if (classData.isPersonal && classData.userId === currentUser.id) {
+  if (window.currentUser && !isSelectMode) {
+    if (classData.isPersonal && classData.userId === window.currentUser.id) {
       // Кнопки для персональных занятий (только для создателя)
       actionButtons = `
         <div class="class-actions">
@@ -605,7 +612,7 @@ async function saveMyGroupsData() {
   if (!isSelectMode) return;
 
   try {
-    if (currentUser && typeof saveUserGroups === "function") {
+    if (window.currentUser && typeof saveUserGroups === "function") {
       await saveUserGroups([...tempSelectedGroups]);
       myGroups = new Set(tempSelectedGroups);
       window.myGroups = myGroups;
@@ -665,7 +672,7 @@ function createMyGroupsControls() {
   container.appendChild(toggleButton);
 
   // Кнопки для авторизованных пользователей
-  if (currentUser) {
+  if (window.currentUser) {
     // Кнопка создания персонального занятия
     const createPersonalButton = document.createElement("button");
     createPersonalButton.className = "filter-button create-personal-btn";
@@ -743,7 +750,7 @@ function findGroupByKey(groupKey) {
 
 // Новая функция для удаления группы
 async function removeFromMyGroups(groupKey) {
-  if (!currentUser) {
+  if (!window.currentUser) {
     window.showNotification("❌ Требуется авторизация", "error");
     return;
   }
@@ -765,6 +772,37 @@ async function removeFromMyGroups(groupKey) {
       "❌ Ошибка удаления группы: " + error.message,
       "error"
     );
+  }
+}
+
+// Универсальная функция добавления в группы
+async function addToMyGroups(groupKey) {
+  if (!window.currentUser) {
+    window.showNotification("❌ Требуется авторизация", "error");
+    return false;
+  }
+
+  try {
+    myGroups.add(groupKey);
+    window.myGroups = myGroups;
+
+    // Сохраняем в базу данных
+    await window.saveUserGroups([...myGroups]);
+
+    // Обновляем интерфейс
+    createMyGroupsControls();
+    renderFilteredSchedule();
+    updateStats();
+    updateFilterFab();
+
+    return true;
+  } catch (error) {
+    console.error("❌ Ошибка добавления в группы:", error);
+    window.showNotification(
+      "❌ Ошибка добавления в группы: " + error.message,
+      "error"
+    );
+    return false;
   }
 }
 
@@ -813,9 +851,9 @@ function updateStats() {
   activeFiltersCount += activeFilters.locations.size;
 
   let userInfo = "";
-  if (currentUser && userProfile) {
+  if (window.currentUser && window.userProfile) {
     userInfo = ` | <span style="color: #27ae60;">👤 ${
-      userProfile.full_name || currentUser.email
+      window.userProfile.full_name || window.currentUser.email
     }</span>`;
 
     if (isAdmin()) {
@@ -950,9 +988,18 @@ async function initializeApp() {
 
   // Ждем инициализации аутентификации
   let attempts = 0;
-  while (typeof currentUser === "undefined" && attempts < 50) {
+  while (!window.hasOwnProperty("currentUser") && attempts < 50) {
     await new Promise((resolve) => setTimeout(resolve, 100));
     attempts++;
+  }
+
+  // Дополнительное ожидание для загрузки данных пользователя
+  if (window.currentUser) {
+    attempts = 0;
+    while (!window.hasOwnProperty("userProfile") && attempts < 30) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      attempts++;
+    }
   }
 
   await loadData();
@@ -1042,12 +1089,12 @@ async function initializeApp() {
 
   console.log("✅ Инициализация завершена!");
 
-  if (currentUser) {
+  if (window.currentUser) {
     const status = isAdmin() ? "Администратор" : "Пользователь";
     console.log(
-      `👤 ${status}: ${userProfile?.full_name || currentUser.email}, групп: ${
-        myGroups.size
-      }`
+      `👤 ${status}: ${
+        window.userProfile?.full_name || window.currentUser.email
+      }, групп: ${myGroups.size}`
     );
   } else {
     console.log(`📂 Гостевой режим, групп загружено: ${myGroups.size}`);
@@ -1070,44 +1117,12 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
-// Добавить в basefucs.js новую функцию перед экспортом:
-async function addToMyGroups(groupKey) {
-  if (!window.currentUser()) {
-    window.showNotification("❌ Требуется авторизация", "error");
-    return false;
-  }
-
-  try {
-    myGroups.add(groupKey);
-    window.myGroups = myGroups;
-
-    // Сохраняем в базу данных
-    await window.saveUserGroups([...myGroups]);
-
-    // Обновляем интерфейс
-    createMyGroupsControls();
-    renderFilteredSchedule();
-    updateStats();
-    updateFilterFab();
-
-    return true;
-  } catch (error) {
-    console.error("❌ Ошибка добавления в группы:", error);
-    window.showNotification(
-      "❌ Ошибка добавления в группы: " + error.message,
-      "error"
-    );
-    return false;
-  }
-}
-
 // === ЭКСПОРТ ФУНКЦИЙ ===
 
-// Оставляем только те функции, которые не перенесены в personal-schedule.js
+// Экспортируем функции для использования в других модулях
 window.removeFromMyGroups = removeFromMyGroups;
-// ДОБАВИТЬ:
-window.myGroups = myGroups;
 window.addToMyGroups = addToMyGroups;
+window.myGroups = myGroups;
 
 // Запуск приложения
 document.addEventListener("DOMContentLoaded", initializeApp);
