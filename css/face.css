@@ -1298,8 +1298,8 @@ body {
 /* ДОБАВИТЬ эти новые стили: */
 .class-indicator {
   position: absolute;
-  top: 15px;
-  right: 70px;
+  top: 25px;
+  right: 2px;
   font-size: 0.8em;
   z-index: 2;
   display: flex;
@@ -2315,8 +2315,8 @@ body {
 
 .personal-indicator {
   position: absolute;
-  top: 15px;
-  right: 70px;
+  top: 25px;
+  right: 2px;
   font-size: 0.8em;
   color: #9b59b6;
   z-index: 2;
