@@ -262,7 +262,7 @@ function matchesFilters(classItem, time, day) {
 function createClassItem(classData, time, day) {
   const locationClass =
     classData.location === "8 марта" ? "loc-8marta" : "loc-libknehta";
-  const locationText = classData.location === "8 марта" ? "8М" : "КЛ";
+  const locationText = classData.location === "8 марта" ? "8 Марта" : "Консул";
 
   const classKey = getClassKey(classData, time, day);
   const isMyGroup = myGroups.has(classKey);
