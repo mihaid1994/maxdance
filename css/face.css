@@ -2284,7 +2284,7 @@ body {
 .personal-indicator {
   position: absolute;
   top: 2px;
-  left: 2px;
+  right: 20px;
   font-size: 0.8em;
   color: #9b59b6;
   z-index: 2;
