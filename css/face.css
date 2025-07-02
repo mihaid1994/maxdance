@@ -831,16 +831,6 @@ body {
   box-shadow: 0 0 8px rgba(255, 215, 0, 0.3) !important;
 }
 
-.my-group-star {
-  position: absolute;
-  top: 2px;
-  right: 28px;
-  font-size: 0.8em;
-  color: #ffd700;
-  z-index: 2;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-}
-
 /* === ЦВЕТА ТИПОВ ЗАНЯТИЙ === */
 .bachata-general {
   border-left-color: #e74c3c;
@@ -1279,20 +1269,31 @@ body {
   position: relative;
 }
 
-.personal-indicator {
+/* ДОБАВИТЬ эти новые стили: */
+.class-indicator {
   position: absolute;
   top: 2px;
-  left: 2px;
+  right: 2px;
   font-size: 0.8em;
-  color: #9b59b6;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.my-group-star {
+  color: #ffd700;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.personal-indicator {
+  color: #9b59b6;
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid #9b59b6;
 }
 
@@ -1570,6 +1571,11 @@ body {
 }
 
 @media (max-width: 480px) {
+  .class-indicator {
+    width: 16px;
+    height: 16px;
+    font-size: 0.7em;
+  }
   .personal-indicator {
     width: 14px;
     height: 14px;
@@ -2284,7 +2290,7 @@ body {
 .personal-indicator {
   position: absolute;
   top: 2px;
-  right: 20px;
+  right: 2px;
   font-size: 0.8em;
   color: #9b59b6;
   z-index: 2;

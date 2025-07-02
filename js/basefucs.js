@@ -268,7 +268,7 @@ function createClassItem(classData, time, day) {
   const isMyGroup = myGroups.has(classKey);
 
   let additionalClasses = "";
-  let showStar = false;
+  let indicator = "";
 
   // Специальный стиль для персональных занятий
   if (classData.isPersonal) {
@@ -281,9 +281,11 @@ function createClassItem(classData, time, day) {
       additionalClasses += " selected-group";
     }
   } else {
-    if (isMyGroup) {
+    if (classData.isPersonal) {
+      indicator = '<div class="class-indicator personal-indicator">👤</div>';
+    } else if (isMyGroup) {
       additionalClasses += " my-group";
-      showStar = true;
+      indicator = '<div class="class-indicator my-group-star">⭐</div>';
     }
   }
 
@@ -340,17 +342,9 @@ function createClassItem(classData, time, day) {
       )}, '${time}', ${day}, this)`
     : `showClassDetails('${classData.name}', '${classData.level}', '${classData.teacher}', '${classData.location}')`;
 
-  // Добавляем индикатор персонального занятия
-  const personalIndicator = classData.isPersonal
-    ? '<div class="personal-indicator">👤</div>'
-    : "";
-
   return `
-    <div class="class-item ${
-      classData.type
-    }${additionalClasses}" onclick="${clickHandler}">
-      ${showStar ? '<div class="my-group-star">⭐</div>' : ""}
-      ${personalIndicator}
+    <div class="class-item ${classData.type}${additionalClasses}" onclick="${clickHandler}">
+      ${indicator}
       <div class="class-location ${locationClass}">${locationText}</div>
       <div class="class-name">${classData.name}</div>
       <div class="class-level">${classData.level}</div>
