@@ -8,33 +8,10 @@ let typeNames = {};
 let locationNames = {};
 const daysCount = 7;
 
-// НОВЫЙ КОД - используем геттеры для синхронизации с модулем auth.js:
-Object.defineProperty(window, "currentUser", {
-  get() {
-    return window.currentUser;
-  },
-  set(value) {
-    window.currentUser = value;
-  },
-});
-
-Object.defineProperty(window, "userProfile", {
-  get() {
-    return window.userProfile;
-  },
-  set(value) {
-    window.userProfile = value;
-  },
-});
-
-Object.defineProperty(window, "supabase", {
-  get() {
-    return window.supabase;
-  },
-  set(value) {
-    window.supabase = value;
-  },
-});
+// Используем переменные из window (из auth.js модуля)
+let currentUser = () => window.currentUser;
+let userProfile = () => window.userProfile;
+let supabase = () => window.supabase;
 
 // Массив исключений для типов занятий
 const excludedTypes = [
