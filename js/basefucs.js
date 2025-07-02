@@ -119,6 +119,7 @@ async function loadData() {
       try {
         const userGroups = await getUserSavedGroups();
         myGroups = new Set(userGroups);
+        window.myGroups = myGroups;
         console.log(`✅ Загружено ${myGroups.size} групп пользователя`);
       } catch (error) {
         console.error("⚠️ Ошибка загрузки групп:", error);
@@ -585,6 +586,7 @@ async function saveMyGroupsData() {
     if (currentUser && typeof saveUserGroups === "function") {
       await saveUserGroups([...tempSelectedGroups]);
       myGroups = new Set(tempSelectedGroups);
+      window.myGroups = myGroups;
 
       window.showNotification(
         `✅ Группы сохранены! Выбрано: ${myGroups.size}`,
@@ -726,6 +728,7 @@ async function removeFromMyGroups(groupKey) {
 
   try {
     myGroups.delete(groupKey);
+    window.myGroups = myGroups;
     await saveUserGroups([...myGroups]);
 
     createMyGroupsControls();
@@ -1049,6 +1052,9 @@ document.addEventListener("keydown", function (event) {
 
 // Оставляем только те функции, которые не перенесены в personal-schedule.js
 window.removeFromMyGroups = removeFromMyGroups;
+// ДОБАВИТЬ:
+window.myGroups = myGroups;
+window.saveUserGroups = saveUserGroups;
 
 // Запуск приложения
 document.addEventListener("DOMContentLoaded", initializeApp);

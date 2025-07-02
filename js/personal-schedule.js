@@ -28,8 +28,12 @@ async function createNewPersonalClass() {
 
     // Добавляем в мои группы автоматически
     const classKey = `personal_${newClass.id}`;
-    window.myGroups.add(classKey);
-    await window.saveUserGroups([...window.myGroups]);
+    if (window.myGroups) {
+      window.myGroups.add(classKey);
+      await window.saveUserGroups([...window.myGroups]);
+    } else {
+      console.warn("window.myGroups не определено");
+    }
 
     closePersonalClassModal();
     await window.reloadScheduleWithAuth();
