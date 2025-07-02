@@ -2402,15 +2402,6 @@ body {
   }
 }
 
-/* Исправления для кнопок персональных занятий */
-.personal-class .class-actions {
-  opacity: 1 !important; /* Всегда показывать для персональных */
-}
-
-.personal-class:hover .class-actions {
-  opacity: 1 !important;
-}
-
 .edit-personal-btn,
 .delete-personal-btn {
   background: rgba(255, 255, 255, 0.95) !important;
