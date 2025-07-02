@@ -2401,3 +2401,41 @@ body {
     page-break-inside: avoid;
   }
 }
+
+/* Исправления для кнопок персональных занятий */
+.personal-class .class-actions {
+  opacity: 1 !important; /* Всегда показывать для персональных */
+}
+
+.personal-class:hover .class-actions {
+  opacity: 1 !important;
+}
+
+.edit-personal-btn,
+.delete-personal-btn {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  border-radius: 4px;
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 0.8em !important;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(5px);
+  z-index: 10 !important;
+}
+
+.edit-personal-btn:hover {
+  background: #9b59b6 !important;
+  color: white !important;
+  transform: scale(1.15) !important;
+}
+
+.delete-personal-btn:hover {
+  background: #e74c3c !important;
+  color: white !important;
+  transform: scale(1.15) !important;
+}

@@ -119,8 +119,30 @@ async function loadData() {
       try {
         const userGroups = await getUserSavedGroups();
         myGroups = new Set(userGroups);
-        window.myGroups = myGroups;
         console.log(`✅ Загружено ${myGroups.size} групп пользователя`);
+
+        // ДОБАВИТЬ СЮДА:
+        // Автоматически добавляем персональные занятия в мои группы
+        if (scheduleData && window.currentUser()) {
+          Object.keys(scheduleData).forEach((time) => {
+            Object.keys(scheduleData[time]).forEach((day) => {
+              scheduleData[time][day].forEach((classItem) => {
+                if (
+                  classItem.isPersonal &&
+                  classItem.userId === window.currentUser().id
+                ) {
+                  const personalKey = `personal_${classItem.personalId}`;
+                  myGroups.add(personalKey);
+                }
+              });
+            });
+          });
+          console.log(
+            `✅ После добавления персональных: ${myGroups.size} групп`
+          );
+        }
+
+        window.myGroups = myGroups;
       } catch (error) {
         console.error("⚠️ Ошибка загрузки групп:", error);
         myGroups = new Set();
@@ -1048,13 +1070,44 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
+// Добавить в basefucs.js новую функцию перед экспортом:
+async function addToMyGroups(groupKey) {
+  if (!window.currentUser()) {
+    window.showNotification("❌ Требуется авторизация", "error");
+    return false;
+  }
+
+  try {
+    myGroups.add(groupKey);
+    window.myGroups = myGroups;
+
+    // Сохраняем в базу данных
+    await window.saveUserGroups([...myGroups]);
+
+    // Обновляем интерфейс
+    createMyGroupsControls();
+    renderFilteredSchedule();
+    updateStats();
+    updateFilterFab();
+
+    return true;
+  } catch (error) {
+    console.error("❌ Ошибка добавления в группы:", error);
+    window.showNotification(
+      "❌ Ошибка добавления в группы: " + error.message,
+      "error"
+    );
+    return false;
+  }
+}
+
 // === ЭКСПОРТ ФУНКЦИЙ ===
 
 // Оставляем только те функции, которые не перенесены в personal-schedule.js
 window.removeFromMyGroups = removeFromMyGroups;
 // ДОБАВИТЬ:
 window.myGroups = myGroups;
-window.saveUserGroups = saveUserGroups;
+window.addToMyGroups = addToMyGroups;
 
 // Запуск приложения
 document.addEventListener("DOMContentLoaded", initializeApp);

@@ -28,11 +28,10 @@ async function createNewPersonalClass() {
 
     // Добавляем в мои группы автоматически
     const classKey = `personal_${newClass.id}`;
-    if (window.myGroups) {
-      window.myGroups.add(classKey);
-      await window.saveUserGroups([...window.myGroups]);
+    if (typeof window.addToMyGroups === "function") {
+      await window.addToMyGroups(classKey);
     } else {
-      console.warn("window.myGroups не определено");
+      console.warn("Функция addToMyGroups недоступна");
     }
 
     closePersonalClassModal();
